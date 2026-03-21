@@ -1,0 +1,100 @@
+name: "短篇小说创作"
+description: "从创意到成稿：叙事学家设计结构 → 心理学家塑造人物 + 叙事设计师构建冲突 → 内容创作者执笔成稿"
+
+agents_dir: "../agency-agents-zh"
+
+llm:
+  provider: "deepseek"
+  model: "deepseek-chat"
+  max_tokens: 2048
+  timeout: 180000
+  retry: 2
+
+concurrency: 2
+
+inputs:
+  - name: premise
+    description: "故事创意/主题/一句话梗概"
+    required: true
+  - name: style
+    description: "风格偏好（如：悬疑、温情、荒诞、科幻）"
+    required: false
+  - name: length
+    description: "目标字数（默认 800）"
+    required: false
+
+steps:
+  - id: story_structure
+    role: "academic/academic-narratologist"
+    task: |
+      请用中文为以下创意设计一个短篇小说的叙事结构：
+
+      创意：{{premise}}
+      风格偏好：{{style}}
+
+      请输出：
+      1. 核心冲突（一句话）
+      2. 叙事视角（第几人称、谁的视角）
+      3. 结构安排（开头钩子 → 发展 → 高潮 → 结尾），每段用一句话概括
+      4. 关键的叙事技巧（如：倒叙、留白、意外反转等）
+      5. 故事想要传递的情感/主题
+
+      简洁明确，不要废话。
+    output: structure
+
+  - id: character_design
+    role: "academic/academic-psychologist"
+    task: |
+      请用中文基于以下叙事结构，设计主要人物：
+
+      {{structure}}
+
+      请为每个关键人物输出：
+      1. 名字和一句话描述
+      2. 核心动机（想要什么）
+      3. 内心矛盾（害怕什么）
+      4. 一个让读者记住的细节/习惯
+      5. 人物弧线（从开头到结尾的变化）
+
+      人物要真实可信，不要脸谱化。
+    output: characters
+    depends_on: [story_structure]
+
+  - id: conflict_design
+    role: "game-development/narrative-designer"
+    task: |
+      请用中文基于以下叙事结构，设计具体的冲突场景和对话：
+
+      {{structure}}
+
+      请输出：
+      1. 开头钩子的具体场景（用 2-3 句话描绘画面）
+      2. 核心冲突爆发的关键对话（3-5 句，要有张力）
+      3. 高潮时刻的情感转折点
+      4. 结尾的留白或余韵
+
+      要具体、有画面感，不要抽象概括。
+    output: scenes
+    depends_on: [story_structure]
+
+  - id: write_story
+    role: "marketing/marketing-content-creator"
+    task: |
+      请用中文根据以下素材，写一篇完整的短篇小说（约 {{length}} 字）。
+
+      ## 叙事结构
+      {{structure}}
+
+      ## 人物设定
+      {{characters}}
+
+      ## 关键场景和对话
+      {{scenes}}
+
+      写作要求：
+      - 直接输出小说正文，不要写标题或说明
+      - 开头第一句就要抓住读者
+      - 对话要自然，像真人说的话
+      - 描写要有画面感，用具体细节而不是形容词堆砌
+      - 结尾要有余韵，让读者回味
+    depends_on: [character_design, conflict_design]
