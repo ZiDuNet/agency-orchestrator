@@ -158,11 +158,12 @@ function resolveAgentsDir(agentsDir: string, workflowPath: string): string {
   const relToWorkflow = resolve(dirname(workflowPath), agentsDir);
   if (existsSync(relToWorkflow)) return relToWorkflow;
 
-  // 3. 常见位置
+  // 3. 常见位置（包括 npm 依赖自带的）
   const candidates = [
     resolve('agency-agents-zh'),
     resolve('../agency-agents-zh'),
     resolve('node_modules/agency-agents-zh'),
+    resolve(dirname(new URL(import.meta.url).pathname), '../../node_modules/agency-agents-zh'),
   ];
   for (const dir of candidates) {
     if (existsSync(dir)) return dir;

@@ -1,6 +1,6 @@
 {
   "name": "agency-orchestrator",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "基于 agency-agents 角色定义的轻量多智能体编排引擎 — 用 YAML 定义工作流，自动调度 AI 角色协作完成复杂任务",
   "keywords": [
     "agency-agents",
@@ -56,6 +56,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
+    "agency-agents-zh": "^1.0.0",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
