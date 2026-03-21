@@ -58,7 +58,7 @@ export function printStepStart(node: DAGNode, stepIndex: number, totalSteps: num
   process.stdout.write(`\n  [${stepIndex}/${totalSteps}] ${node.step.id} — ${role}`);
 }
 
-export function printStepComplete(node: DAGNode): void {
+export function printStepComplete(node: DAGNode, verbose: boolean = false): void {
   const duration = ((node.endTime || 0) - (node.startTime || 0)) / 1000;
   const tokens = node.tokenUsage
     ? `, ${node.tokenUsage.input + node.tokenUsage.output} tokens`
@@ -66,6 +66,16 @@ export function printStepComplete(node: DAGNode): void {
 
   if (node.status === 'completed') {
     console.log(`  -> 完成 (${duration.toFixed(1)}s${tokens})`);
+    // 默认显示输出内容
+    if (node.result) {
+      console.log('');
+      // 缩进显示，加灰色边框
+      const lines = node.result.split('\n');
+      for (const line of lines) {
+        console.log(`    ${line}`);
+      }
+      console.log('');
+    }
   } else if (node.status === 'failed') {
     console.log(`  -> 失败: ${node.error}`);
   } else if (node.status === 'skipped') {
@@ -78,9 +88,8 @@ export function printSummary(result: WorkflowResult, outputPath: string): void {
   const duration = (result.totalDuration / 1000).toFixed(1);
   const completedSteps = result.steps.filter(s => s.status === 'completed').length;
 
-  console.log('\n' + '─'.repeat(50));
-  console.log(`  ${result.success ? '完成' : '部分失败'}: ${completedSteps}/${result.steps.length} 步`);
-  console.log(`  耗时: ${duration}s | Tokens: ${totalTokens}`);
-  console.log(`  输出: ${outputPath}`);
-  console.log('─'.repeat(50));
+  console.log('\n' + '='.repeat(50));
+  console.log(`  ${result.success ? '完成' : '部分失败'}: ${completedSteps}/${result.steps.length} 步 | ${duration}s | ${totalTokens} tokens`);
+  console.log(`  详细输出: ${outputPath}`);
+  console.log('='.repeat(50));
 }
