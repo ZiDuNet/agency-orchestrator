@@ -210,6 +210,13 @@ agency-orchestrator（本项目 — YAML 工作流引擎）
 DeepSeek / Claude / OpenAI / Ollama
 ```
 
+## 姊妹项目
+
+| 项目 | 说明 |
+|------|------|
+| [agency-agents-zh](https://github.com/jnMetaCode/agency-agents-zh) | 186 个 AI 角色定义 — 本编排引擎的角色库 |
+| [superpowers-zh](https://github.com/jnMetaCode/superpowers-zh) | AI 编程超能力 · 中文版 — 17 个 skills，让你的 AI 编程助手真正会干活 |
+
 ## 路线图
 
 - [x] **v0.1** — YAML 工作流、DAG 引擎、4 个 LLM 连接器、CLI、实时输出

@@ -253,6 +253,13 @@ agency-orchestrator (this project — YAML workflow engine)
 DeepSeek / Claude / OpenAI / Ollama
 ```
 
+## Sister Projects
+
+| Project | Description |
+|---------|-------------|
+| [agency-agents-zh](https://github.com/jnMetaCode/agency-agents-zh) | 186 AI role definitions — the role library this orchestrator is built on |
+| [superpowers-zh](https://github.com/jnMetaCode/superpowers-zh) | AI coding superpowers — 17 skills to make your AI coding assistant actually productive |
+
 ## Roadmap
 
 - [x] **v0.1** — YAML workflow, DAG engine, 4 LLM connectors, CLI, real-time output
