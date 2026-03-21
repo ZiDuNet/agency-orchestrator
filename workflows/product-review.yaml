@@ -1,7 +1,7 @@
 name: "产品需求评审"
 description: "多角色协作评审 PRD 文档 — 产品经理分析需求，架构师评估技术，设计师评估体验，最后汇总结论"
 
-agents_dir: "../agency-agents-zh"
+agents_dir: "agency-agents-zh"
 
 llm:
   provider: "claude"

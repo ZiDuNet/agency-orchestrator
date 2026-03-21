@@ -1,7 +1,7 @@
 name: "短篇小说创作"
 description: "从创意到成稿：叙事学家设计结构 → 心理学家塑造人物 + 叙事设计师构建冲突 → 内容创作者执笔成稿"
 
-agents_dir: "../agency-agents-zh"
+agents_dir: "agency-agents-zh"
 
 llm:
   provider: "deepseek"

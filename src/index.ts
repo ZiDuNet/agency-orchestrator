@@ -34,6 +34,8 @@ import { ClaudeConnector } from './connectors/claude.js';
 import { OllamaConnector } from './connectors/ollama.js';
 import { OpenAICompatibleConnector } from './connectors/openai-compatible.js';
 import { saveResults, printStepResult, printStepRunning, clearRunningLine, printSummary } from './output/reporter.js';
+import { existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
 import type { LLMConnector } from './types.js';
 
 /**
@@ -45,6 +47,9 @@ export async function run(
   options?: { outputDir?: string; quiet?: boolean }
 ): Promise<import('./types.js').WorkflowResult> {
   const workflow = parseWorkflow(workflowPath);
+
+  // 自动解析 agents_dir
+  workflow.agents_dir = resolveAgentsDir(workflow.agents_dir, workflowPath);
 
   // 校验
   const errors = validateWorkflow(workflow);
@@ -130,4 +135,31 @@ export async function run(
   }
 
   return result;
+}
+
+/**
+ * 自动查找 agents 目录
+ * 优先级：YAML 中指定的路径 → 相对于 workflow 文件 → 常见位置
+ */
+function resolveAgentsDir(agentsDir: string, workflowPath: string): string {
+  // 1. 如果 YAML 中指定的路径存在，直接用
+  const absolute = resolve(agentsDir);
+  if (existsSync(absolute)) return absolute;
+
+  // 2. 相对于 workflow 文件所在目录
+  const relToWorkflow = resolve(dirname(workflowPath), agentsDir);
+  if (existsSync(relToWorkflow)) return relToWorkflow;
+
+  // 3. 常见位置
+  const candidates = [
+    resolve('agency-agents-zh'),
+    resolve('../agency-agents-zh'),
+    resolve('node_modules/agency-agents-zh'),
+  ];
+  for (const dir of candidates) {
+    if (existsSync(dir)) return dir;
+  }
+
+  // 找不到就返回原值，让后续报错
+  return agentsDir;
 }

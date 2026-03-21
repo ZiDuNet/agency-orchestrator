@@ -1,7 +1,7 @@
 name: "DeepSeek 实战测试"
 description: "3步工作流：产品分析 → 技术+设计并行评估 → 汇总，验证 DAG 并行和变量传递"
 
-agents_dir: "../agency-agents-zh"
+agents_dir: "agency-agents-zh"
 
 llm:
   provider: "deepseek"

@@ -8,8 +8,9 @@
  *   ao plan workflow.yaml
  *   ao roles --agents-dir ./agents
  */
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { execSync } from 'node:child_process';
 import { parseWorkflow, validateWorkflow } from './core/parser.js';
 import { buildDAG, formatDAG } from './core/dag.js';
 import { listAgents } from './agents/loader.js';
@@ -36,6 +37,9 @@ async function main(): Promise<void> {
       break;
     case 'roles':
       handleRoles();
+      break;
+    case 'init':
+      await handleInit();
       break;
     case '--version':
     case '-v':
@@ -127,8 +131,44 @@ function handlePlan(): void {
   }
 }
 
+async function handleInit(): Promise<void> {
+  const targetDir = resolve('agency-agents-zh');
+
+  if (existsSync(targetDir)) {
+    console.log(`  agency-agents-zh 已存在，跳过下载`);
+    // 尝试更新
+    try {
+      execSync('git pull', { cwd: targetDir, stdio: 'pipe' });
+      console.log('  已更新到最新版本');
+    } catch {
+      console.log('  (更新失败，使用现有版本)');
+    }
+  } else {
+    console.log('  正在下载 agency-agents-zh (186 个 AI 角色定义)...\n');
+    try {
+      execSync(
+        'git clone --depth 1 https://github.com/jnMetaCode/agency-agents-zh.git',
+        { stdio: 'inherit' }
+      );
+      console.log('\n  下载完成!');
+    } catch {
+      console.error('\n  下载失败，请手动克隆:');
+      console.error('  git clone https://github.com/jnMetaCode/agency-agents-zh.git');
+      process.exit(1);
+    }
+  }
+
+  // 显示角色数量
+  const agents = listAgents(targetDir);
+  console.log(`  共 ${agents.length} 个角色可用\n`);
+  console.log('  接下来你可以:');
+  console.log('    ao roles                              查看所有角色');
+  console.log('    ao plan workflows/product-review.yaml  查看执行计划');
+  console.log('    ao run workflows/story-creation.yaml   运行工作流');
+}
+
 function handleRoles(): void {
-  const agentsDir = getArgValue('--agents-dir') || './agents';
+  const agentsDir = getArgValue('--agents-dir') || resolveAgentsDir();
 
   try {
     const agents = listAgents(resolve(agentsDir));
@@ -180,6 +220,25 @@ function parseInputArgs(): Record<string, string> {
   return inputs;
 }
 
+/**
+ * 自动查找 agents 目录，按优先级：
+ * 1. ./agency-agents-zh (ao init 下载的)
+ * 2. ../agency-agents-zh (同级目录)
+ * 3. ./agents (自定义)
+ */
+function resolveAgentsDir(): string {
+  const candidates = [
+    './agency-agents-zh',
+    '../agency-agents-zh',
+    './agents',
+  ];
+  for (const dir of candidates) {
+    const full = resolve(dir);
+    if (existsSync(full)) return dir;
+  }
+  return './agency-agents-zh';
+}
+
 function getArgValue(flag: string): string | undefined {
   const idx = args.indexOf(flag);
   if (idx >= 0 && idx + 1 < args.length) {
@@ -199,26 +258,36 @@ function getVersion(): string {
 
 function printHelp(): void {
   console.log(`
-  agency-orchestrator — 多智能体编排引擎
+  agency-orchestrator — Multi-Agent Workflow Engine
+  基于 agency-agents-zh 的多智能体编排引擎
 
-  用法:
-    ao run <workflow.yaml> [选项]     执行工作流
-    ao validate <workflow.yaml>       校验工作流定义
-    ao plan <workflow.yaml>           查看执行计划
-    ao roles [--agents-dir path]     列出可用角色
+  Quick Start:
+    ao init                           下载 186 个 AI 角色定义
+    ao roles                          查看所有可用角色
+    ao plan <workflow.yaml>           查看执行计划 (DAG)
+    ao run <workflow.yaml> [options]   执行工作流
 
-  选项:
-    --input, -i key=value    传入工作流输入变量
+  Commands:
+    init                              下载/更新 agency-agents-zh
+    run <workflow.yaml>               执行工作流
+    validate <workflow.yaml>          校验工作流定义
+    plan <workflow.yaml>              查看执行计划
+    roles [--agents-dir path]         列出可用角色
+
+  Options:
+    --input, -i key=value    传入输入变量
     --input, -i key=@file    从文件读取变量值
     --output dir             输出目录 (默认 .ao-output/)
     --quiet, -q              静默模式
     --version, -v            版本号
-    --help, -h               帮助信息
 
-  示例:
-    ao run product-review.yaml -i prd=@prd.md
-    ao plan content-pipeline.yaml
-    ao roles --agents-dir node_modules/agency-agents-zh/agents
+  Examples:
+    ao init
+    ao run workflows/story-creation.yaml -i premise='一个时间旅行的故事' -i style='悬疑'
+    ao run workflows/product-review.yaml -i prd_content=@prd.md
+    ao plan workflows/content-pipeline.yaml
+
+  Agents: https://github.com/jnMetaCode/agency-agents-zh
   `);
 }
 

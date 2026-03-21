@@ -82,6 +82,9 @@ export function listAgents(agentsDir: string): AgentDefinition[] {
   // 遍历子目录
   for (const dept of readdirSync(dir, { withFileTypes: true })) {
     if (!dept.isDirectory()) continue;
+    // 跳过非 agent 目录
+    if (dept.name.startsWith('.') || dept.name === 'node_modules' || dept.name === 'scripts' ||
+        dept.name === 'integrations' || dept.name === 'examples') continue;
     const deptDir = join(dir, dept.name);
 
     for (const file of readdirSync(deptDir, { withFileTypes: true })) {

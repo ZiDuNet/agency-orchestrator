@@ -1,7 +1,7 @@
 name: "内容创作流水线"
 description: "从主题到成稿的完整内容创作流程 — 研究、写作、品牌审核"
 
-agents_dir: "../agency-agents-zh"
+agents_dir: "agency-agents-zh"
 
 llm:
   provider: "claude"

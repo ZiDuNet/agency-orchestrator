@@ -1,7 +1,7 @@
 name: "Real LLM Test"
 description: "2-step workflow to verify real LLM integration"
 
-agents_dir: "../agency-agents-zh"
+agents_dir: "agency-agents-zh"
 
 llm:
   provider: "ollama"
