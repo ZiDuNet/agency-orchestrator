@@ -70,9 +70,27 @@ async function handleRun(): Promise<void> {
   const inputs = parseInputArgs();
   const outputDir = getArgValue('--output') || '.ao-output';
   const quiet = args.includes('--quiet') || args.includes('-q');
+  let resumeDir = getArgValue('--resume');
+  const fromStep = getArgValue('--from');
+
+  // --resume last: 自动找最近一次的输出目录
+  if (resumeDir === 'last') {
+    const { findLatestOutput } = await import('./output/reporter.js');
+    const latest = findLatestOutput(outputDir);
+    if (!latest) {
+      console.error('找不到上一次的运行输出，请指定具体目录: --resume <dir>');
+      process.exit(1);
+    }
+    resumeDir = latest;
+  }
 
   try {
-    const result = await run(resolve(filePath), inputs, { outputDir, quiet });
+    const result = await run(resolve(filePath), inputs, {
+      outputDir,
+      quiet,
+      resumeDir: resumeDir ? resolve(resumeDir) : undefined,
+      fromStep,
+    });
     process.exit(result.success ? 0 : 1);
   } catch (err) {
     console.error(`\n错误: ${err instanceof Error ? err.message : err}`);
@@ -278,6 +296,8 @@ function printHelp(): void {
     --input, -i key=value    传入输入变量
     --input, -i key=@file    从文件读取变量值
     --output dir             输出目录 (默认 .ao-output/)
+    --resume <dir|last>      从上次运行恢复（加载已完成步骤的输出）
+    --from <step-id>         配合 --resume，从指定步骤重新执行
     --quiet, -q              静默模式
     --version, -v            版本号
 
@@ -286,6 +306,11 @@ function printHelp(): void {
     ao run workflows/story-creation.yaml -i premise='一个时间旅行的故事' -i style='悬疑'
     ao run workflows/product-review.yaml -i prd_content=@prd.md
     ao plan workflows/content-pipeline.yaml
+
+  Resume (基于上次结果迭代):
+    ao run workflow.yaml --resume last                    # 跳过上次已完成的步骤
+    ao run workflow.yaml --resume last --from summary     # 从 summary 步骤重新执行
+    ao run workflow.yaml --resume .ao-output/xxx/         # 指定具体输出目录
 
   Agents: https://github.com/jnMetaCode/agency-agents-zh
   `);

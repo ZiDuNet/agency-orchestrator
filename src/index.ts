@@ -14,7 +14,7 @@ export { loadAgent, listAgents } from './agents/loader.js';
 export { ClaudeConnector } from './connectors/claude.js';
 export { OllamaConnector } from './connectors/ollama.js';
 export { OpenAICompatibleConnector } from './connectors/openai-compatible.js';
-export { saveResults } from './output/reporter.js';
+export { saveResults, loadPreviousContext, findLatestOutput } from './output/reporter.js';
 
 export type {
   WorkflowDefinition,
@@ -34,7 +34,7 @@ import { executeDAG, type ExecutorOptions } from './core/executor.js';
 import { ClaudeConnector } from './connectors/claude.js';
 import { OllamaConnector } from './connectors/ollama.js';
 import { OpenAICompatibleConnector } from './connectors/openai-compatible.js';
-import { saveResults, printStepResult, printStepRunning, clearRunningLine, printSummary } from './output/reporter.js';
+import { saveResults, printStepResult, printStepRunning, clearRunningLine, printSummary, loadPreviousContext, getCompletedStepIds, findLatestOutput } from './output/reporter.js';
 import { existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import type { LLMConnector } from './types.js';
@@ -45,7 +45,14 @@ import type { LLMConnector } from './types.js';
 export async function run(
   workflowPath: string,
   inputs: Record<string, string>,
-  options?: { outputDir?: string; quiet?: boolean }
+  options?: {
+    outputDir?: string;
+    quiet?: boolean;
+    /** resume 目录：从上次运行的输出中加载已完成步骤 */
+    resumeDir?: string;
+    /** 从指定步骤开始重新执行（跳过之前的步骤） */
+    fromStep?: string;
+  }
 ): Promise<import('./types.js').WorkflowResult> {
   const workflow = parseWorkflow(workflowPath);
 
@@ -104,6 +111,46 @@ export async function run(
     }
   }
 
+  // Resume: 加载上一次运行的输出到 context
+  let skipStepIds: Set<string> | undefined;
+  const resumeDir = options?.resumeDir;
+  const fromStep = options?.fromStep;
+
+  if (resumeDir) {
+    const prevContext = loadPreviousContext(resumeDir);
+    for (const [key, value] of prevContext) {
+      inputMap.set(key, value);
+    }
+
+    if (fromStep) {
+      // --from: 跳过指定步骤之前的所有已完成步骤
+      const completedIds = getCompletedStepIds(resumeDir);
+      skipStepIds = new Set<string>();
+      // 找到 fromStep 所在 level，跳过之前所有 level 中的已完成步骤
+      const fromLevel = dag.levels.findIndex(l => l.includes(fromStep));
+      if (fromLevel < 0) {
+        throw new Error(`--from 指定的步骤 "${fromStep}" 不存在`);
+      }
+      for (let li = 0; li < fromLevel; li++) {
+        for (const id of dag.levels[li]) {
+          if (completedIds.includes(id)) {
+            skipStepIds.add(id);
+          }
+        }
+      }
+    } else {
+      // 无 --from: 跳过所有已完成的步骤
+      const completedIds = getCompletedStepIds(resumeDir);
+      skipStepIds = new Set(completedIds);
+    }
+
+    if (!options?.quiet) {
+      console.log(`  恢复自: ${resumeDir}`);
+      console.log(`  跳过已完成步骤: ${skipStepIds.size} 个`);
+      if (fromStep) console.log(`  从步骤 [${fromStep}] 开始重新执行`);
+    }
+  }
+
   // 执行
   let stepCounter = 0;
   const totalSteps = workflow.steps.length;
@@ -121,6 +168,7 @@ export async function run(
     llmConfig: workflow.llm,
     concurrency: workflow.concurrency || 2,
     inputs: inputMap,
+    skipStepIds,
     onBatchStart: quiet ? undefined : (nodes) => {
       printStepRunning(nodes);
     },

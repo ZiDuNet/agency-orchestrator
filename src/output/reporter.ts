@@ -1,7 +1,7 @@
 /**
  * 执行结果输出和保存
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { WorkflowResult } from '../types.js';
 import type { DAGNode } from '../types.js';
@@ -31,7 +31,7 @@ export function saveResults(result: WorkflowResult, outputDir: string): string {
     writeFileSync(join(dir, 'summary.md'), lastCompleted.output, 'utf-8');
   }
 
-  // 保存元数据
+  // 保存元数据（含 output 变量名，用于 resume）
   const metadata = {
     name: result.name,
     success: result.success,
@@ -41,6 +41,7 @@ export function saveResults(result: WorkflowResult, outputDir: string): string {
       id: s.id,
       role: s.role,
       status: s.status,
+      output_var: s.output_var,
       duration: `${(s.duration / 1000).toFixed(1)}s`,
       tokens: s.tokens,
     })),
@@ -95,6 +96,65 @@ export function printStepRunning(nodes: DAGNode[]): void {
  */
 export function clearRunningLine(): void {
   process.stdout.write('\r\x1b[K');
+}
+
+/**
+ * 从上一次运行的输出目录中加载步骤结果，重建 context
+ * 用于 --resume 场景：加载已完成步骤的输出变量到 context
+ */
+export function loadPreviousContext(outputDir: string): Map<string, string> {
+  const context = new Map<string, string>();
+  const metadataPath = join(outputDir, 'metadata.json');
+
+  if (!existsSync(metadataPath)) {
+    throw new Error(`resume 目录无效: 找不到 ${metadataPath}`);
+  }
+
+  const metadata = JSON.parse(readFileSync(metadataPath, 'utf-8'));
+  const stepsDir = join(outputDir, 'steps');
+
+  for (const step of metadata.steps) {
+    if (step.status === 'completed' && step.output_var) {
+      // 从 steps/ 目录读取输出内容
+      const stepFiles = existsSync(stepsDir) ? readdirSync(stepsDir) : [];
+      const stepFile = stepFiles.find(f => f.endsWith(`-${step.id}.md`));
+      if (stepFile) {
+        const content = readFileSync(join(stepsDir, stepFile), 'utf-8');
+        if (content && content !== '(无输出)') {
+          context.set(step.output_var, content);
+        }
+      }
+    }
+  }
+
+  return context;
+}
+
+/**
+ * 获取上一次运行的步骤 ID 列表（已完成的）
+ */
+export function getCompletedStepIds(outputDir: string): string[] {
+  const metadataPath = join(outputDir, 'metadata.json');
+  if (!existsSync(metadataPath)) return [];
+  const metadata = JSON.parse(readFileSync(metadataPath, 'utf-8'));
+  return metadata.steps
+    .filter((s: { status: string }) => s.status === 'completed')
+    .map((s: { id: string }) => s.id);
+}
+
+/**
+ * 查找最近一次运行的输出目录
+ */
+export function findLatestOutput(baseDir: string, workflowName?: string): string | null {
+  if (!existsSync(baseDir)) return null;
+  const dirs = readdirSync(baseDir)
+    .filter(d => {
+      if (workflowName && !d.startsWith(workflowName)) return false;
+      return existsSync(join(baseDir, d, 'metadata.json'));
+    })
+    .sort()
+    .reverse();
+  return dirs.length > 0 ? join(baseDir, dirs[0]) : null;
 }
 
 export function printSummary(result: WorkflowResult, outputPath: string): void {

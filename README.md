@@ -202,7 +202,26 @@ ao roles                             # 列出所有角色
 | `--input key=value` | 传入输入变量 |
 | `--input key=@file` | 从文件读取变量值 |
 | `--output dir` | 输出目录（默认 `.ao-output/`） |
+| `--resume <dir\|last>` | 从上次运行恢复（加载已完成步骤的输出） |
+| `--from <step-id>` | 配合 `--resume`，从指定步骤重新执行 |
 | `--quiet` | 静默模式 |
+
+### 迭代优化（Resume）
+
+第一次运行后想基于结果继续优化？用 `--resume`：
+
+```bash
+# 第一次运行
+ao run workflows/content-publish.yaml -i topic='AI编程' -i platform='公众号'
+
+# 基于上次结果，只重新执行最后的发布清单步骤
+ao run workflows/content-publish.yaml --resume last --from publish_checklist
+
+# 指定具体的输出目录
+ao run workflows/content-publish.yaml --resume .ao-output/内容发布流程-2026-03-24T10-30-00/
+```
+
+`--resume last` 自动找最近一次输出，`--from` 指定从哪个步骤开始重新执行，之前的步骤使用上次的输出。
 
 ## 编程 API
 
@@ -243,6 +262,14 @@ console.log(result.totalTokens); // { input: 1234, output: 5678 }
 | `task` | string | 是 | 任务描述，支持 `{{变量}}` |
 | `output` | string | 否 | 输出变量名 |
 | `depends_on` | string[] | 否 | 依赖的步骤 ID |
+| `depends_on_mode` | string | 否 | `"all"`（默认）或 `"any_completed"`（任一完成即可） |
+| `condition` | string | 否 | 条件表达式，不满足则跳过（如 `"{{var}} contains 技术"`） |
+| `type` | string | 否 | `"approval"` 表示人工审批节点 |
+| `prompt` | string | 否 | 审批节点的提示文本 |
+| `loop` | object | 否 | 循环配置 |
+| `loop.back_to` | string | 否 | 循环回到的步骤 ID |
+| `loop.max_iterations` | number | 否 | 最大循环次数（1-10） |
+| `loop.exit_condition` | string | 否 | 退出条件表达式 |
 
 ## 输出
 
@@ -266,6 +293,11 @@ console.log(result.totalTokens); // { input: 1234, output: 5678 }
 | `product-review.yaml` | 产品经理、架构师、UX 研究员 | 产品需求评审（并行技术+设计评估） |
 | `content-pipeline.yaml` | 策略师、创作者、增长黑客 | 内容创作流水线 |
 | `story-creation.yaml` | 叙事学家、心理学家、叙事设计师、内容创作者 | 协作小说创作（4 角色、3 层 DAG） |
+| `department-collab/hiring-pipeline.yaml` | HR、技术面试官、业务面试官 | 招聘流程（条件分支：技术岗/非技术岗） |
+| `department-collab/content-publish.yaml` | 内容创作者、品牌守护者 | 内容发布（循环：品牌审核打回重写） |
+| `department-collab/incident-response.yaml` | SRE、安全工程师、后端架构师 | 事故响应（3 路条件分支） |
+| `department-collab/marketing-campaign.yaml` | 策略师、创作者、审批人 | 营销活动（人工审批节点） |
+| `department-collab/code-review.yaml` | 代码审查员、安全工程师 | 代码评审（循环：评审不通过打回） |
 
 ## 项目生态
 
@@ -294,8 +326,8 @@ console.log(result.totalTokens); // { input: 1234, output: 5678 }
 ## 路线图
 
 - [x] **v0.1** — YAML 工作流、DAG 引擎、4 个 LLM 连接器、CLI、实时输出
-- [ ] **v0.2** — 人工审批节点、迭代循环、工作流市场
-- [ ] **v0.3** — Web UI、MCP Server 模式、可视化 DAG 编辑器
+- [x] **v0.2** — 条件分支、循环迭代、人工审批、Resume 断点续跑、5 个部门协作模板
+- [ ] **v0.3** — Web UI、MCP Server 模式、可视化 DAG 编辑器、工作流市场
 
 ## 贡献
 
@@ -315,6 +347,20 @@ console.log(result.totalTokens); // { input: 1234, output: 5678 }
 [agency-agents-zh](https://github.com/jnMetaCode/agency-agents-zh) provides **186 production-ready AI role prompts** (product managers, engineers, designers, marketers...), but each role works alone. Real tasks need **collaboration** — who goes first, how to hand off context, when to run in parallel.
 
 Agency Orchestrator turns a YAML file into a multi-agent pipeline. No Python. No framework boilerplate. Just roles and tasks.
+
+### vs CrewAI
+
+| | CrewAI | LangGraph | **Agency Orchestrator** |
+|---|--------|-----------|---------------------|
+| Language | Python | Python | **YAML (zero code)** |
+| Roles | Write your own | Write your own | **186 ready-to-use** |
+| Dependencies | pip + LiteLLM + dozens | pip + LangChain | **npm + 2 deps** |
+| Chinese roles | None | None | **186 (44 China-native)** |
+| Models | LiteLLM (buggy) | LangChain | **Native: DeepSeek, Ollama, Claude, OpenAI** |
+| Parallelism | Manager mode (flawed) | Manual graph | **Auto DAG detection** |
+| Branching | None | Manual | **Condition expressions** |
+| Loops | None | Manual | **Declarative loop/exit** |
+| Price | Open source + $25-99/mo cloud | Open source | **Completely free** |
 
 ### Quick Start
 
@@ -336,6 +382,99 @@ export DEEPSEEK_API_KEY=your-key
 npx ao run workflows/story-creation.yaml --input premise='A time travel story'
 ```
 
+### How It Works
+
+```yaml
+steps:
+  - id: analyze
+    role: "product/product-manager"
+    task: "Analyze this PRD:\n\n{{prd_content}}"
+    output: requirements
+
+  - id: tech_review
+    role: "engineering/engineering-software-architect"
+    task: "Evaluate feasibility:\n\n{{requirements}}"
+    depends_on: [analyze]
+    condition: "{{requirements}} contains technical"  # conditional branching
+
+  - id: review_loop
+    role: "engineering/engineering-code-reviewer"
+    task: "Review code:\n\n{{draft}}"
+    loop:                                              # iterative loop
+      back_to: write_code
+      max_iterations: 3
+      exit_condition: "{{review_result}} contains approved"
+```
+
+The engine automatically:
+1. Parses YAML → builds a **DAG** (directed acyclic graph)
+2. Detects parallelism — independent steps run concurrently
+3. Evaluates **conditions** — skips steps when conditions aren't met
+4. Executes **loops** — iterates between steps until exit condition is met
+5. Passes outputs between steps via `{{variables}}`
+6. Retries on failure (exponential backoff)
+7. Saves all outputs to `.ao-output/`
+
+### Condition Branching
+
+```yaml
+- id: tech_path
+  role: "engineering/engineering-sre"
+  task: "Technical evaluation: {{requirements}}"
+  depends_on: [classify]
+  condition: "{{job_type}} contains technical"  # only runs for technical roles
+
+- id: biz_path
+  role: "marketing/marketing-strategist"
+  task: "Business evaluation: {{requirements}}"
+  depends_on: [classify]
+  condition: "{{job_type}} contains business"   # only runs for business roles
+
+- id: summary
+  depends_on: [tech_path, biz_path]
+  depends_on_mode: "any_completed"  # proceeds when ANY upstream completes (not all)
+```
+
+Supported operators: `contains`, `equals`, `not_contains`, `not_equals`.
+
+### Loop Iteration
+
+```yaml
+- id: write_draft
+  role: "content/content-creator"
+  task: "Write article: {{topic}}"
+  output: draft
+
+- id: brand_review
+  role: "marketing/brand-guardian"
+  task: "Review brand compliance: {{draft}}"
+  output: review_result
+  depends_on: [write_draft]
+  loop:
+    back_to: write_draft          # loop back to this step
+    max_iterations: 3             # max 3 rounds (hard limit: 10)
+    exit_condition: "{{review_result}} contains approved"
+```
+
+When the exit condition is not met, execution jumps back to `back_to` step. The `{{_loop_iteration}}` variable tracks the current iteration number.
+
+### Resume (Iterate on Previous Results)
+
+After a run completes, use `--resume` to iterate without re-running everything:
+
+```bash
+# First run
+ao run workflows/content-publish.yaml -i topic='AI Programming'
+
+# Resume: only re-run the last step, reuse previous outputs
+ao run workflows/content-publish.yaml --resume last --from publish_checklist
+
+# Resume from a specific output directory
+ao run workflows/content-publish.yaml --resume .ao-output/content-publish-2026-03-24T10-30-00/
+```
+
+`--resume last` auto-finds the most recent output. `--from` specifies which step to restart from — earlier steps use cached outputs.
+
 ### Supported LLMs
 
 | Provider | Config | Env Variable |
@@ -344,6 +483,8 @@ npx ao run workflows/story-creation.yaml --input premise='A time travel story'
 | **Claude** | `provider: "claude"` | `ANTHROPIC_API_KEY` |
 | **OpenAI** | `provider: "openai"` | `OPENAI_API_KEY` |
 | **Ollama** (local) | `provider: "ollama"` | None needed |
+
+All providers support custom `base_url` and `api_key`, compatible with Zhipu, Moonshot, and other OpenAI-compatible APIs.
 
 ### CLI Commands
 
@@ -355,6 +496,29 @@ ao plan <workflow.yaml>               # Show execution plan (DAG)
 ao roles                             # List all available roles
 ```
 
+| Option | Description |
+|--------|-------------|
+| `--input key=value` | Pass input variables |
+| `--input key=@file` | Read variable value from file |
+| `--output dir` | Output directory (default `.ao-output/`) |
+| `--resume <dir\|last>` | Resume from previous run (load completed step outputs) |
+| `--from <step-id>` | With `--resume`, restart from a specific step |
+| `--quiet` | Quiet mode |
+
+### YAML Schema — Step Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | Yes | Unique step identifier |
+| `role` | string | Yes | Role path (e.g. `"engineering/engineering-sre"`) |
+| `task` | string | Yes | Task description, supports `{{variables}}` |
+| `output` | string | No | Output variable name |
+| `depends_on` | string[] | No | Dependent step IDs |
+| `depends_on_mode` | string | No | `"all"` (default) or `"any_completed"` |
+| `condition` | string | No | Condition expression; step skipped if not met |
+| `type` | string | No | `"approval"` for human approval gate |
+| `loop` | object | No | Loop configuration (`back_to`, `max_iterations`, `exit_condition`) |
+
 ### Programmatic API
 
 ```typescript
@@ -363,6 +527,20 @@ import { run } from 'agency-orchestrator';
 const result = await run('workflow.yaml', {
   prd_content: 'Your PRD here...',
 });
+
+console.log(result.success);     // true/false
+console.log(result.totalTokens); // { input: 1234, output: 5678 }
 ```
+
+### Workflow Templates
+
+| Template | Roles | Description |
+|----------|-------|-------------|
+| `product-review.yaml` | PM, Architect, UX Researcher | Product requirements review (parallel tech + design) |
+| `story-creation.yaml` | Narratologist, Psychologist, Narrative Designer, Content Creator | Collaborative fiction (4 roles, 3-layer DAG) |
+| `department-collab/hiring-pipeline.yaml` | HR, Tech Interviewer, Biz Interviewer | Hiring pipeline (condition: tech vs non-tech) |
+| `department-collab/content-publish.yaml` | Content Creator, Brand Guardian | Content publishing (loop: brand review rejection) |
+| `department-collab/incident-response.yaml` | SRE, Security Engineer, Backend Architect | Incident response (3-way condition branching) |
+| `department-collab/code-review.yaml` | Code Reviewer, Security Engineer | Code review (loop: review rejection) |
 
 </details>

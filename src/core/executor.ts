@@ -28,6 +28,8 @@ export interface ExecutorOptions {
   onBatchStart?: (nodes: DAGNode[]) => void;
   /** 一批并行步骤全部完成后的回调（按顺序） */
   onBatchComplete?: (nodes: DAGNode[]) => void;
+  /** resume 模式: 跳过这些步骤（使用 context 中已有的输出） */
+  skipStepIds?: Set<string>;
 }
 
 export async function executeDAG(dag: DAG, options: ExecutorOptions): Promise<WorkflowResult> {
@@ -61,7 +63,7 @@ export async function executeDAG(dag: DAG, options: ExecutorOptions): Promise<Wo
     const { onBatchStart, onBatchComplete } = options;
     const allTasks = dag.levels[levelIndex].map(id => dag.nodes.get(id)!);
 
-    // 过滤掉已被标记为 skipped 的节点
+    // 过滤掉已被标记为 skipped 的节点 和 resume 跳过的节点
     const tasks = allTasks.filter(node => {
       if (node.status === 'skipped') {
         node.endTime = Date.now();
@@ -74,6 +76,24 @@ export async function executeDAG(dag: DAG, options: ExecutorOptions): Promise<Wo
           duration: 0,
           tokens: { input: 0, output: 0 },
           iterations: iterCount > 0 ? iterCount + 1 : undefined,
+        });
+        onStepComplete?.(node);
+        return false;
+      }
+      // resume 模式：跳过已有输出的步骤
+      if (options.skipStepIds?.has(node.step.id)) {
+        node.status = 'completed';
+        node.result = node.step.output ? context.get(node.step.output) : undefined;
+        node.startTime = Date.now();
+        node.endTime = node.startTime;
+        upsertStepResult(stepResults, {
+          id: node.step.id,
+          role: node.step.role,
+          status: 'completed',
+          output: node.result,
+          output_var: node.step.output,
+          duration: 0,
+          tokens: { input: 0, output: 0 },
         });
         onStepComplete?.(node);
         return false;
@@ -132,6 +152,7 @@ export async function executeDAG(dag: DAG, options: ExecutorOptions): Promise<Wo
           role: node.step.role,
           status: node.status as StepResult['status'],
           output: node.result,
+          output_var: node.step.output,
           error: node.error,
           duration: (node.endTime || 0) - (node.startTime || 0),
           tokens: node.tokenUsage || { input: 0, output: 0 },

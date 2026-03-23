@@ -97,6 +97,7 @@ export interface StepResult {
   role: string;
   status: 'completed' | 'failed' | 'skipped';
   output?: string;
+  output_var?: string;            // 输出变量名（用于 resume 时重建 context）
   error?: string;
   duration: number;
   tokens: { input: number; output: number };
