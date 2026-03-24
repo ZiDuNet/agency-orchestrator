@@ -48,6 +48,8 @@ export async function run(
   options?: {
     outputDir?: string;
     quiet?: boolean;
+    /** --watch 模式：终端实时进度 UI */
+    watch?: boolean;
     /** resume 目录：从上次运行的输出中加载已完成步骤 */
     resumeDir?: string;
     /** 从指定步骤开始重新执行（跳过之前的步骤） */
@@ -155,8 +157,20 @@ export async function run(
   let stepCounter = 0;
   const totalSteps = workflow.steps.length;
   const quiet = options?.quiet ?? false;
+  const useWatch = options?.watch ?? false;
 
-  if (!quiet) {
+  // --watch 模式：使用终端 UI 渲染器
+  let watchCallback: ((event: import('./cli/watch.js').ProgressEvent) => void) | undefined;
+  if (useWatch) {
+    const { createWatchRenderer } = await import('./cli/watch.js');
+    watchCallback = createWatchRenderer(
+      workflow.name,
+      workflow.steps.map(s => s.id),
+      workflow.steps.map(s => s.role),
+    );
+  }
+
+  if (!quiet && !useWatch) {
     console.log(`\n  工作流: ${workflow.name}`);
     console.log(`  步骤数: ${totalSteps} | 并发: ${workflow.concurrency} | 模型: ${workflow.llm.model}`);
     console.log('─'.repeat(50));
@@ -169,10 +183,21 @@ export async function run(
     concurrency: workflow.concurrency || 2,
     inputs: inputMap,
     skipStepIds,
-    onBatchStart: quiet ? undefined : (nodes) => {
+    onBatchStart: quiet ? undefined : useWatch ? (nodes) => {
+      for (const node of nodes) {
+        watchCallback!({ type: 'step_start', stepId: node.step.id, role: node.step.role, total: totalSteps, completed: stepCounter });
+      }
+    } : (nodes) => {
       printStepRunning(nodes);
     },
-    onBatchComplete: quiet ? undefined : (nodes) => {
+    onBatchComplete: quiet ? undefined : useWatch ? (nodes) => {
+      for (const node of nodes) {
+        stepCounter++;
+        const elapsed = node.endTime && node.startTime ? node.endTime - node.startTime : undefined;
+        const type = node.status === 'skipped' ? 'step_skip' : node.status === 'failed' ? 'step_error' : 'step_done';
+        watchCallback!({ type, stepId: node.step.id, role: node.step.role, elapsed, total: totalSteps, completed: stepCounter });
+      }
+    } : (nodes) => {
       clearRunningLine();
       for (const node of nodes) {
         stepCounter++;

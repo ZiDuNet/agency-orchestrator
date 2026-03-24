@@ -237,9 +237,11 @@ All providers support custom `base_url` and `api_key`, compatible with any OpenA
 
 ```bash
 ao init                              # Download 186 AI roles
+ao init --workflow                    # Interactive workflow creator
 ao run <workflow.yaml> [options]      # Execute workflow
 ao validate <workflow.yaml>           # Validate without running
 ao plan <workflow.yaml>               # Show execution plan (DAG)
+ao explain <workflow.yaml>            # Explain execution plan in natural language
 ao roles                             # List all available roles
 ```
 
@@ -250,6 +252,7 @@ ao roles                             # List all available roles
 | `--output dir` | Output directory (default `.ao-output/`) |
 | `--resume <dir\|last>` | Resume from previous run |
 | `--from <step-id>` | With `--resume`, restart from a specific step |
+| `--watch` | Real-time terminal progress display |
 | `--quiet` | Quiet mode |
 
 ## YAML Schema
@@ -300,18 +303,58 @@ console.log(result.success);     // true/false
 console.log(result.totalTokens); // { input: 1234, output: 5678 }
 ```
 
-## Workflow Templates
+## Integrations
+
+Works with **9 AI coding tools** — each tool gets a workflow-runner skill file:
+
+| Tool | Integration | Docs |
+|------|------------|------|
+| **Claude Code** | Skill mode / CLI | [Guide](./integrations/claude-code/) |
+| **Cursor** | `.cursor/rules` | [Guide](./integrations/cursor/) |
+| **Kiro** | `.kiro/steering` | [Guide](./integrations/kiro/) |
+| **Trae** | `.trae/rules` | [Guide](./integrations/trae/) |
+| **Gemini CLI** | `GEMINI.md` | [Guide](./integrations/gemini-cli/) |
+| **Codex CLI** | `.codex/instructions` | [Guide](./integrations/codex/) |
+| **DeerFlow 2.0** | `skills/custom` | [Guide](./integrations/deerflow/) |
+| **Antigravity** | `AGENTS.md` | [Guide](./integrations/antigravity/) |
+| **OpenClaw** | Skill mode / CLI | [Guide](./integrations/openclaw/) |
+
+## Workflow Templates (20+)
+
+### Dev Workflows
 
 | Template | Roles | Description |
 |----------|-------|-------------|
-| `product-review.yaml` | PM, Architect, UX Researcher | Product requirements review (parallel tech + design) |
+| `dev/pr-review.yaml` | Code Reviewer, Security Engineer, Performance Benchmarker | PR review (3-way parallel → summary) |
+| `dev/tech-debt-audit.yaml` | Architect, Code Reviewer, Test Analyst, Sprint Prioritizer | Tech debt audit (parallel → prioritize) |
+| `dev/api-doc-gen.yaml` | Tech Writer, API Tester | API doc generation (analyze → validate → finalize) |
+| `dev/readme-i18n.yaml` | Content Creator, Tech Writer | README internationalization |
+| `dev/security-audit.yaml` | Security Engineer, Threat Detection Engineer | Security audit (parallel → report) |
+| `dev/release-checklist.yaml` | SRE, Performance Benchmarker, Security Engineer, PM | Release Go/No-Go decision |
+
+### Data / Design / Ops Workflows
+
+| Template | Roles | Description |
+|----------|-------|-------------|
+| `data/data-pipeline-review.yaml` | Data Engineer, DB Optimizer, Data Analyst | Data pipeline review |
+| `data/dashboard-design.yaml` | Data Analyst, UX Researcher, UI Designer | Dashboard design |
+| `design/requirement-to-plan.yaml` | PM, Architect, Project Manager | Requirements → tech design → task breakdown |
+| `design/ux-review.yaml` | UX Researcher, Accessibility Auditor, UX Architect | UX review |
+| `ops/incident-postmortem.yaml` | Incident Commander, SRE, PM | Incident postmortem |
+| `ops/sre-health-check.yaml` | SRE, Performance Benchmarker, Infra Ops | SRE health check (3-way parallel) |
+
+### General Workflows
+
+| Template | Roles | Description |
+|----------|-------|-------------|
+| `product-review.yaml` | PM, Architect, UX Researcher | Product requirements review |
 | `content-pipeline.yaml` | Strategist, Creator, Growth Hacker | Content creation pipeline |
-| `story-creation.yaml` | Narratologist, Psychologist, Narrative Designer, Creator | Collaborative fiction (4 roles, 3-layer DAG) |
-| `department-collab/hiring-pipeline.yaml` | HR, Tech Interviewer, Biz Interviewer | Hiring pipeline (condition branching) |
-| `department-collab/content-publish.yaml` | Content Creator, Brand Guardian | Content publishing (review loop) |
-| `department-collab/incident-response.yaml` | SRE, Security Engineer, Backend Architect | Incident response (3-way branching) |
-| `department-collab/marketing-campaign.yaml` | Strategist, Creator, Approver | Marketing campaign (human approval) |
+| `story-creation.yaml` | Narratologist, Psychologist, Narrative Designer, Creator | Collaborative fiction (4 roles) |
 | `department-collab/code-review.yaml` | Code Reviewer, Security Engineer | Code review (review loop) |
+| `department-collab/hiring-pipeline.yaml` | HR, Tech Interviewer, Biz Interviewer | Hiring pipeline |
+| `department-collab/content-publish.yaml` | Content Creator, Brand Guardian | Content publishing (review loop) |
+| `department-collab/incident-response.yaml` | SRE, Security Engineer, Backend Architect | Incident response |
+| `department-collab/marketing-campaign.yaml` | Strategist, Creator, Approver | Marketing campaign (human approval) |
 
 ## Output Structure
 
@@ -340,7 +383,8 @@ Each run saves to `.ao-output/<name>-<timestamp>/`:
 
 - [x] **v0.1** — YAML workflows, DAG engine, 4 LLM connectors, CLI, streaming output
 - [x] **v0.2** — Condition branching, loop iteration, human approval, Resume, 5 department-collab templates
-- [ ] **v0.3** — Web UI, MCP Server mode, visual DAG editor, workflow marketplace
+- [x] **v0.3** — 9 AI tool integrations, 20+ workflow templates, `ao explain`, `ao init --workflow`, `--watch` mode
+- [ ] **v0.4** — MCP Server mode, Web UI, visual DAG editor, English role support, workflow marketplace
 
 ## Contributing
 

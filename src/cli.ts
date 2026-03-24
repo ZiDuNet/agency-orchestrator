@@ -41,13 +41,16 @@ async function main(): Promise<void> {
     case 'init':
       await handleInit();
       break;
+    case 'explain':
+      await handleExplain();
+      break;
     case '--version':
     case '-v':
       console.log(getVersion());
       break;
     default: {
       // 容错：用户可能漏了空格，如 "planworkflows/x.yaml"
-      const knownCmds = ['run', 'validate', 'plan', 'roles'];
+      const knownCmds = ['run', 'validate', 'plan', 'explain', 'roles'];
       const match = knownCmds.find(c => command.startsWith(c) && command.length > c.length);
       if (match) {
         console.error(`看起来少了个空格？试试:\n  ao ${match} ${command.slice(match.length)}\n`);
@@ -70,6 +73,7 @@ async function handleRun(): Promise<void> {
   const inputs = parseInputArgs();
   const outputDir = getArgValue('--output') || '.ao-output';
   const quiet = args.includes('--quiet') || args.includes('-q');
+  const watch = args.includes('--watch');
   let resumeDir = getArgValue('--resume');
   const fromStep = getArgValue('--from');
 
@@ -88,6 +92,7 @@ async function handleRun(): Promise<void> {
     const result = await run(resolve(filePath), inputs, {
       outputDir,
       quiet,
+      watch,
       resumeDir: resumeDir ? resolve(resumeDir) : undefined,
       fromStep,
     });
@@ -149,7 +154,37 @@ function handlePlan(): void {
   }
 }
 
+async function handleExplain(): Promise<void> {
+  const filePath = args[1];
+  if (!filePath) {
+    console.error('用法: ao explain <workflow.yaml>');
+    process.exit(1);
+  }
+
+  try {
+    const workflow = parseWorkflow(resolve(filePath));
+    const errors = validateWorkflow(workflow);
+    if (errors.length > 0) {
+      console.error(`校验失败:\n${errors.map(e => `  - ${e}`).join('\n')}`);
+      process.exit(1);
+    }
+
+    const { explainWorkflow } = await import('./cli/explain.js');
+    console.log('\n' + explainWorkflow(workflow) + '\n');
+  } catch (err) {
+    console.error(`错误: ${err instanceof Error ? err.message : err}`);
+    process.exit(1);
+  }
+}
+
 async function handleInit(): Promise<void> {
+  // ao init --workflow: 交互式创建工作流
+  if (args.includes('--workflow')) {
+    const { interactiveInitWorkflow } = await import('./cli/init-workflow.js');
+    await interactiveInitWorkflow();
+    return;
+  }
+
   const targetDir = resolve('agency-agents-zh');
 
   if (existsSync(targetDir)) {
@@ -287,9 +322,11 @@ function printHelp(): void {
 
   Commands:
     init                              下载/更新 agency-agents-zh
+    init --workflow                    交互式创建新工作流
     run <workflow.yaml>               执行工作流
     validate <workflow.yaml>          校验工作流定义
     plan <workflow.yaml>              查看执行计划
+    explain <workflow.yaml>           用自然语言解释执行计划
     roles [--agents-dir path]         列出可用角色
 
   Options:
@@ -298,6 +335,7 @@ function printHelp(): void {
     --output dir             输出目录 (默认 .ao-output/)
     --resume <dir|last>      从上次运行恢复（加载已完成步骤的输出）
     --from <step-id>         配合 --resume，从指定步骤重新执行
+    --watch                  实时进度显示（终端 UI）
     --quiet, -q              静默模式
     --version, -v            版本号
 

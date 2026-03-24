@@ -67,9 +67,15 @@ npx superpowers-zh
 
 AI 会自动解析 YAML → 加载角色 → 按 DAG 顺序执行 → 保存结果。零配置。
 
-各工具集成指南见 [integrations/](./integrations/)：
+各工具集成指南见 [integrations/](./integrations/)（支持 9 个 AI 编程工具）：
 - [Claude Code](./integrations/claude-code/) — Skill 模式（推荐）
-- [Cursor](./integrations/cursor/) — .cursorrules 模式
+- [Cursor](./integrations/cursor/) — .cursor/rules
+- [Kiro](./integrations/kiro/) — .kiro/steering
+- [Trae](./integrations/trae/) — .trae/rules
+- [Gemini CLI](./integrations/gemini-cli/) — GEMINI.md
+- [Codex CLI](./integrations/codex/) — .codex/instructions
+- [DeerFlow 2.0](./integrations/deerflow/) — skills/custom
+- [Antigravity](./integrations/antigravity/) — AGENTS.md
 - [OpenClaw](./integrations/openclaw/) — Skill 模式
 
 ### 方式二：CLI 模式（需要 API key）
@@ -193,9 +199,11 @@ analyze ──→ tech_review  ──→ summary
 
 ```bash
 ao init                              # 下载 186 个 AI 角色
+ao init --workflow                    # 交互式创建工作流
 ao run <workflow.yaml> [选项]          # 执行工作流
 ao validate <workflow.yaml>           # 校验（不执行）
-ao plan <workflow.yaml>               # 查看执行计划
+ao plan <workflow.yaml>               # 查看执行计划（DAG）
+ao explain <workflow.yaml>            # 用自然语言解释执行计划
 ao roles                             # 列出所有角色
 ```
 
@@ -206,6 +214,7 @@ ao roles                             # 列出所有角色
 | `--output dir` | 输出目录（默认 `.ao-output/`） |
 | `--resume <dir\|last>` | 从上次运行恢复（加载已完成步骤的输出） |
 | `--from <step-id>` | 配合 `--resume`，从指定步骤重新执行 |
+| `--watch` | 实时终端进度显示 |
 | `--quiet` | 静默模式 |
 
 ### 迭代优化（Resume）
@@ -367,18 +376,42 @@ console.log(result.totalTokens); // { input: 1234, output: 5678 }
 └── metadata.json       # 耗时、token 用量、步骤状态
 ```
 
-## 内置工作流模板
+## 内置工作流模板（20+）
+
+### 开发类
 
 | 模板 | 角色 | 说明 |
 |------|------|------|
-| `product-review.yaml` | 产品经理、架构师、UX 研究员 | 产品需求评审（并行技术+设计评估） |
+| `dev/pr-review.yaml` | 代码审查员、安全工程师、性能基准师 | PR 评审（3 路并行→汇总） |
+| `dev/tech-debt-audit.yaml` | 架构师、代码审查员、测试分析师、Sprint 排序师 | 技术债务审计（并行→优先级排序） |
+| `dev/api-doc-gen.yaml` | 技术文档工程师、API 测试员 | API 文档生成（分析→验证→定稿） |
+| `dev/readme-i18n.yaml` | 内容创作者、技术文档工程师 | README 国际化 |
+| `dev/security-audit.yaml` | 安全工程师、威胁检测工程师 | 安全审计（并行→报告） |
+| `dev/release-checklist.yaml` | SRE、性能基准师、安全工程师、产品经理 | 发布 Go/No-Go 决策 |
+
+### 数据 / 设计 / 运维类
+
+| 模板 | 角色 | 说明 |
+|------|------|------|
+| `data/data-pipeline-review.yaml` | 数据工程师、数据库优化师、数据分析师 | 数据管道评审 |
+| `data/dashboard-design.yaml` | 数据分析师、UX 研究员、UI 设计师 | 仪表盘设计 |
+| `design/requirement-to-plan.yaml` | 产品经理、架构师、项目经理 | 需求→技术设计→任务拆分 |
+| `design/ux-review.yaml` | UX 研究员、无障碍审核员、UX 架构师 | UX 评审 |
+| `ops/incident-postmortem.yaml` | 事故指挥官、SRE、产品经理 | 事故复盘 |
+| `ops/sre-health-check.yaml` | SRE、性能基准师、基础设施运维师 | SRE 健康检查（3 路并行） |
+
+### 通用类
+
+| 模板 | 角色 | 说明 |
+|------|------|------|
+| `product-review.yaml` | 产品经理、架构师、UX 研究员 | 产品需求评审 |
 | `content-pipeline.yaml` | 策略师、创作者、增长黑客 | 内容创作流水线 |
-| `story-creation.yaml` | 叙事学家、心理学家、叙事设计师、内容创作者 | 协作小说创作（4 角色、3 层 DAG） |
-| `department-collab/hiring-pipeline.yaml` | HR、技术面试官、业务面试官 | 招聘流程（条件分支：技术岗/非技术岗） |
-| `department-collab/content-publish.yaml` | 内容创作者、品牌守护者 | 内容发布（循环：品牌审核打回重写） |
-| `department-collab/incident-response.yaml` | SRE、安全工程师、后端架构师 | 事故响应（3 路条件分支） |
-| `department-collab/marketing-campaign.yaml` | 策略师、创作者、审批人 | 营销活动（人工审批节点） |
-| `department-collab/code-review.yaml` | 代码审查员、安全工程师 | 代码评审（循环：评审不通过打回） |
+| `story-creation.yaml` | 叙事学家、心理学家、叙事设计师、创作者 | 协作小说创作（4 角色） |
+| `department-collab/code-review.yaml` | 代码审查员、安全工程师 | 代码评审（循环） |
+| `department-collab/hiring-pipeline.yaml` | HR、技术面试官、业务面试官 | 招聘流程 |
+| `department-collab/content-publish.yaml` | 内容创作者、品牌守护者 | 内容发布（循环） |
+| `department-collab/incident-response.yaml` | SRE、安全工程师、后端架构师 | 事故响应 |
+| `department-collab/marketing-campaign.yaml` | 策略师、创作者、审批人 | 营销活动（人工审批） |
 
 ## 项目生态
 
@@ -387,7 +420,7 @@ console.log(result.totalTokens); // { input: 1234, output: 5678 }
                             │
               ┌─────────────┼─────────────┐
               ▼             ▼             ▼
-      Claude Code      Cursor       OpenClaw        ← Skill 模式（无需 API key）
+      Claude Code    Cursor    Kiro    Trae    Gemini CLI    Codex    ...    ← 9 个 AI 编程工具
       (workflow-runner 技能)
               │
               ▼
@@ -409,7 +442,8 @@ console.log(result.totalTokens); // { input: 1234, output: 5678 }
 
 - [x] **v0.1** — YAML 工作流、DAG 引擎、4 个 LLM 连接器、CLI、实时输出
 - [x] **v0.2** — 条件分支、循环迭代、人工审批、Resume 断点续跑、5 个部门协作模板
-- [ ] **v0.3** — Web UI、MCP Server 模式、可视化 DAG 编辑器、工作流市场
+- [x] **v0.3** — 9 个 AI 工具集成、20+ 工作流模板、`ao explain`、`ao init --workflow`、`--watch` 模式
+- [ ] **v0.4** — MCP Server 模式、Web UI、可视化 DAG 编辑器、英文角色支持、工作流市场
 
 ## 贡献
 
