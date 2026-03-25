@@ -271,6 +271,7 @@ ao validate <workflow.yaml>           # Validate without running
 ao plan <workflow.yaml>               # Show execution plan (DAG)
 ao explain <workflow.yaml>            # Explain execution plan in natural language
 ao roles                             # List all available roles
+ao serve                             # Start MCP Server (for Claude Code / Cursor)
 ```
 
 | Option | Description |
@@ -282,6 +283,43 @@ ao roles                             # List all available roles
 | `--from <step-id>` | With `--resume`, restart from a specific step |
 | `--watch` | Real-time terminal progress display |
 | `--quiet` | Quiet mode |
+
+## MCP Server Mode
+
+AI coding tools (Claude Code, Cursor, etc.) can invoke workflow operations directly via the MCP protocol:
+
+```bash
+ao serve              # Start MCP stdio server
+ao serve --verbose    # With debug logging
+```
+
+Claude Code (`settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "agency-orchestrator": {
+      "command": "npx",
+      "args": ["agency-orchestrator", "serve"]
+    }
+  }
+}
+```
+
+Cursor (`.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "agency-orchestrator": {
+      "command": "npx",
+      "args": ["agency-orchestrator", "serve"]
+    }
+  }
+}
+```
+
+6 tools available: `run_workflow`, `validate_workflow`, `list_workflows`, `plan_workflow`, `compose_workflow`, `list_roles`.
 
 ## YAML Schema
 
@@ -412,7 +450,8 @@ Each run saves to `.ao-output/<name>-<timestamp>/`:
 - [x] **v0.1** — YAML workflows, DAG engine, 4 LLM connectors, CLI, streaming output
 - [x] **v0.2** — Condition branching, loop iteration, human approval, Resume, 5 department-collab templates
 - [x] **v0.3** — 9 AI tool integrations, 20+ workflow templates, `ao explain`, `ao init --workflow`, `--watch` mode
-- [ ] **v0.4** — MCP Server mode, Web UI, visual DAG editor, English role support, workflow marketplace
+- [x] **v0.4** — MCP Server mode (`ao serve`)
+- [ ] **v0.5** — Web UI, visual DAG editor, English role support, workflow marketplace
 
 ## Contributing
 

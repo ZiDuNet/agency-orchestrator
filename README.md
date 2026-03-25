@@ -217,6 +217,7 @@ ao validate <workflow.yaml>           # 校验（不执行）
 ao plan <workflow.yaml>               # 查看执行计划（DAG）
 ao explain <workflow.yaml>            # 用自然语言解释执行计划
 ao roles                             # 列出所有角色
+ao serve                             # 启动 MCP Server（供 Claude Code / Cursor 调用）
 ```
 
 | 参数 | 说明 |
@@ -354,6 +355,43 @@ console.log(result.success);     // true/false
 console.log(result.totalTokens); // { input: 1234, output: 5678 }
 ```
 
+## MCP Server 模式
+
+AI 编程工具（Claude Code、Cursor 等）可通过 MCP 协议直接调用工作流操作，无需手动集成：
+
+```bash
+ao serve              # 启动 MCP stdio 服务器
+ao serve --verbose    # 带调试日志
+```
+
+配置 Claude Code（`settings.json`）：
+
+```json
+{
+  "mcpServers": {
+    "agency-orchestrator": {
+      "command": "npx",
+      "args": ["agency-orchestrator", "serve"]
+    }
+  }
+}
+```
+
+配置 Cursor（`.cursor/mcp.json`）：
+
+```json
+{
+  "mcpServers": {
+    "agency-orchestrator": {
+      "command": "npx",
+      "args": ["agency-orchestrator", "serve"]
+    }
+  }
+}
+```
+
+提供 6 个工具：`run_workflow`、`validate_workflow`、`list_workflows`、`plan_workflow`、`compose_workflow`、`list_roles`。
+
 ## YAML Schema
 
 ### 工作流
@@ -471,7 +509,8 @@ console.log(result.totalTokens); // { input: 1234, output: 5678 }
 - [x] **v0.1** — YAML 工作流、DAG 引擎、4 个 LLM 连接器、CLI、实时输出
 - [x] **v0.2** — 条件分支、循环迭代、人工审批、Resume 断点续跑、5 个部门协作模板
 - [x] **v0.3** — 9 个 AI 工具集成、20+ 工作流模板、`ao explain`、`ao init --workflow`、`--watch` 模式
-- [ ] **v0.4** — MCP Server 模式、Web UI、可视化 DAG 编辑器、英文角色支持、工作流市场
+- [x] **v0.4** — MCP Server 模式（`ao serve`）
+- [ ] **v0.5** — Web UI、可视化 DAG 编辑器、英文角色支持、工作流市场
 
 ## 贡献
 
