@@ -451,12 +451,13 @@ ao-output/产品需求评审-2026-03-22/
 └── metadata.json       # 耗时、token 用量、步骤状态
 ```
 
-## 内置工作流模板（20+）
+## 内置工作流模板（29 个）
 
-### 开发类
+### 开发类（7 个）
 
 | 模板 | 角色 | 说明 |
 |------|------|------|
+| `dev/tech-design-review.yaml` | 架构师、后端架构师、安全工程师、代码审查员 | **技术方案评审**（设计→并行评审→结论） |
 | `dev/pr-review.yaml` | 代码审查员、安全工程师、性能基准师 | PR 评审（3 路并行→汇总） |
 | `dev/tech-debt-audit.yaml` | 架构师、代码审查员、测试分析师、Sprint 排序师 | 技术债务审计（并行→优先级排序） |
 | `dev/api-doc-gen.yaml` | 技术文档工程师、API 测试员 | API 文档生成（分析→验证→定稿） |
@@ -464,7 +465,15 @@ ao-output/产品需求评审-2026-03-22/
 | `dev/security-audit.yaml` | 安全工程师、威胁检测工程师 | 安全审计（并行→报告） |
 | `dev/release-checklist.yaml` | SRE、性能基准师、安全工程师、产品经理 | 发布 Go/No-Go 决策 |
 
-### 数据 / 设计 / 运维类
+### 营销类（3 个）
+
+| 模板 | 角色 | 说明 |
+|------|------|------|
+| `marketing/competitor-analysis.yaml` | 趋势研究员、数据分析师、SEO 专家、高管摘要师 | **竞品分析报告**（研究→并行分析→摘要） |
+| `marketing/xiaohongshu-content.yaml` | 小红书专家、内容创作者、视觉叙事师、小红书运营 | **小红书种草笔记**（选题→并行创作→优化） |
+| `marketing/seo-content-matrix.yaml` | SEO 专家、策略师、内容创作者 | **SEO 内容矩阵**（关键词→策略→批量生成→审核） |
+
+### 数据 / 设计 / 运维类（6 个）
 
 | 模板 | 角色 | 说明 |
 |------|------|------|
@@ -474,14 +483,24 @@ ao-output/产品需求评审-2026-03-22/
 | `design/ux-review.yaml` | UX 研究员、无障碍审核员、UX 架构师 | UX 评审 |
 | `ops/incident-postmortem.yaml` | 事故指挥官、SRE、产品经理 | 事故复盘 |
 | `ops/sre-health-check.yaml` | SRE、性能基准师、基础设施运维师 | SRE 健康检查（3 路并行） |
+| `ops/weekly-report.yaml` | 会议助手、内容创作者、高管摘要师 | **周报/月报生成**（整理→亮点→定稿） |
 
-### 通用类
+### 战略 / 法务 / HR 类（3 个）
+
+| 模板 | 角色 | 说明 |
+|------|------|------|
+| `strategy/business-plan.yaml` | 趋势研究员、财务预测师、产品经理、高管摘要师 | **商业计划书**（市场→并行分析→整合） |
+| `legal/contract-review.yaml` | 合同审查专家、法务合规员 | **合同审查**（逐条分析→合规检查→意见书） |
+| `hr/interview-questions.yaml` | 招聘专家、心理学家、后端架构师 | **面试题设计**（维度→并行出题→评分表） |
+
+### 通用类（10 个）
 
 | 模板 | 角色 | 说明 |
 |------|------|------|
 | `product-review.yaml` | 产品经理、架构师、UX 研究员 | 产品需求评审 |
 | `content-pipeline.yaml` | 策略师、创作者、增长黑客 | 内容创作流水线 |
 | `story-creation.yaml` | 叙事学家、心理学家、叙事设计师、创作者 | 协作小说创作（4 角色） |
+| `ai-opinion-article.yaml` | 趋势研究员、叙事设计师、心理学家、创作者 | AI 观点长文 |
 | `department-collab/code-review.yaml` | 代码审查员、安全工程师 | 代码评审（循环） |
 | `department-collab/hiring-pipeline.yaml` | HR、技术面试官、业务面试官 | 招聘流程 |
 | `department-collab/content-publish.yaml` | 内容创作者、品牌守护者 | 内容发布（循环） |
@@ -519,7 +538,7 @@ ao-output/产品需求评审-2026-03-22/
 - [x] **v0.1** — YAML 工作流、DAG 引擎、4 个 LLM 连接器、CLI、实时输出
 - [x] **v0.2** — 条件分支、循环迭代、人工审批、Resume 断点续跑、5 个部门协作模板
 - [x] **v0.3** — 9 个 AI 工具集成、20+ 工作流模板、`ao explain`、`ao init --workflow`、`--watch` 模式
-- [x] **v0.4** — MCP Server 模式（`ao serve`）、14 个 AI 工具集成、一键安装脚本
+- [x] **v0.4** — MCP Server 模式（`ao serve`）、14 个 AI 工具集成、一键安装脚本、29 个工作流模板
 - [ ] **v0.5** — Web UI、可视化 DAG 编辑器、英文角色支持、工作流市场
 
 ## 贡献

@@ -398,12 +398,13 @@ Works with **14 AI coding tools** — install with one command:
 | **Antigravity** | `AGENTS.md` | `--tool antigravity` | [Guide](./integrations/antigravity/) |
 | **OpenClaw** | Skill mode | `--tool openclaw` | [Guide](./integrations/openclaw/) |
 
-## Workflow Templates (20+)
+## Workflow Templates (29)
 
-### Dev Workflows
+### Dev Workflows (7)
 
 | Template | Roles | Description |
 |----------|-------|-------------|
+| `dev/tech-design-review.yaml` | Architect, Backend Architect, Security Engineer, Code Reviewer | **Tech design review** (design → parallel review → verdict) |
 | `dev/pr-review.yaml` | Code Reviewer, Security Engineer, Performance Benchmarker | PR review (3-way parallel → summary) |
 | `dev/tech-debt-audit.yaml` | Architect, Code Reviewer, Test Analyst, Sprint Prioritizer | Tech debt audit (parallel → prioritize) |
 | `dev/api-doc-gen.yaml` | Tech Writer, API Tester | API doc generation (analyze → validate → finalize) |
@@ -411,7 +412,15 @@ Works with **14 AI coding tools** — install with one command:
 | `dev/security-audit.yaml` | Security Engineer, Threat Detection Engineer | Security audit (parallel → report) |
 | `dev/release-checklist.yaml` | SRE, Performance Benchmarker, Security Engineer, PM | Release Go/No-Go decision |
 
-### Data / Design / Ops Workflows
+### Marketing Workflows (3)
+
+| Template | Roles | Description |
+|----------|-------|-------------|
+| `marketing/competitor-analysis.yaml` | Trend Researcher, Analyst, SEO Specialist, Executive Summary | **Competitor analysis** (research → parallel analysis → summary) |
+| `marketing/xiaohongshu-content.yaml` | Xiaohongshu Expert, Creator, Visual Storyteller, Operator | **Xiaohongshu content** (topic → parallel creation → optimize) |
+| `marketing/seo-content-matrix.yaml` | SEO Specialist, Strategist, Content Creator | **SEO content matrix** (keywords → strategy → batch generate → review) |
+
+### Data / Design / Ops Workflows (7)
 
 | Template | Roles | Description |
 |----------|-------|-------------|
@@ -421,14 +430,24 @@ Works with **14 AI coding tools** — install with one command:
 | `design/ux-review.yaml` | UX Researcher, Accessibility Auditor, UX Architect | UX review |
 | `ops/incident-postmortem.yaml` | Incident Commander, SRE, PM | Incident postmortem |
 | `ops/sre-health-check.yaml` | SRE, Performance Benchmarker, Infra Ops | SRE health check (3-way parallel) |
+| `ops/weekly-report.yaml` | Meeting Assistant, Content Creator, Executive Summary | **Weekly/monthly report** (organize → highlights → finalize) |
 
-### General Workflows
+### Strategy / Legal / HR Workflows (3)
+
+| Template | Roles | Description |
+|----------|-------|-------------|
+| `strategy/business-plan.yaml` | Trend Researcher, Financial Forecaster, PM, Executive Summary | **Business plan** (market → parallel analysis → integrate) |
+| `legal/contract-review.yaml` | Contract Reviewer, Legal Compliance | **Contract review** (clause analysis → compliance → opinion) |
+| `hr/interview-questions.yaml` | Recruiter, Psychologist, Backend Architect | **Interview questions** (dimensions → parallel design → scorecard) |
+
+### General Workflows (9)
 
 | Template | Roles | Description |
 |----------|-------|-------------|
 | `product-review.yaml` | PM, Architect, UX Researcher | Product requirements review |
 | `content-pipeline.yaml` | Strategist, Creator, Growth Hacker | Content creation pipeline |
 | `story-creation.yaml` | Narratologist, Psychologist, Narrative Designer, Creator | Collaborative fiction (4 roles) |
+| `ai-opinion-article.yaml` | Trend Researcher, Narrative Designer, Psychologist, Creator | AI opinion long-form article |
 | `department-collab/code-review.yaml` | Code Reviewer, Security Engineer | Code review (review loop) |
 | `department-collab/hiring-pipeline.yaml` | HR, Tech Interviewer, Biz Interviewer | Hiring pipeline |
 | `department-collab/content-publish.yaml` | Content Creator, Brand Guardian | Content publishing (review loop) |
@@ -463,7 +482,7 @@ ao-output/product-review-2026-03-22/
 - [x] **v0.1** — YAML workflows, DAG engine, 4 LLM connectors, CLI, streaming output
 - [x] **v0.2** — Condition branching, loop iteration, human approval, Resume, 5 department-collab templates
 - [x] **v0.3** — 9 AI tool integrations, 20+ workflow templates, `ao explain`, `ao init --workflow`, `--watch` mode
-- [x] **v0.4** — MCP Server mode (`ao serve`), 14 AI tool integrations, one-command installer
+- [x] **v0.4** — MCP Server mode (`ao serve`), 14 AI tool integrations, one-command installer, 29 workflow templates
 - [ ] **v0.5** — Web UI, visual DAG editor, English role support, workflow marketplace
 
 ## Contributing
