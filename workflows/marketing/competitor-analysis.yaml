@@ -40,7 +40,7 @@ steps:
     output: trend_report
 
   - id: data_analysis
-    role: "specialized/support-analytics-reporter"
+    role: "support/support-analytics-reporter"
     task: |
       基于以下趋势研究，进行定量竞品对比分析：
 
