@@ -451,7 +451,7 @@ ao-output/产品需求评审-2026-03-22/
 └── metadata.json       # 耗时、token 用量、步骤状态
 ```
 
-## 内置工作流模板（29 个）
+## 内置工作流模板（30 个）
 
 ### 开发类（7 个）
 
@@ -493,7 +493,7 @@ ao-output/产品需求评审-2026-03-22/
 | `legal/contract-review.yaml` | 合同审查专家、法务合规员 | **合同审查**（逐条分析→合规检查→意见书） |
 | `hr/interview-questions.yaml` | 招聘专家、心理学家、后端架构师 | **面试题设计**（维度→并行出题→评分表） |
 
-### 通用类（9 个）
+### 通用类（10 个）
 
 | 模板 | 角色 | 说明 |
 |------|------|------|
@@ -506,6 +506,7 @@ ao-output/产品需求评审-2026-03-22/
 | `department-collab/content-publish.yaml` | 内容创作者、品牌守护者 | 内容发布（循环） |
 | `department-collab/incident-response.yaml` | SRE、安全工程师、后端架构师 | 事故响应 |
 | `department-collab/marketing-campaign.yaml` | 策略师、创作者、审批人 | 营销活动（人工审批） |
+| `department-collab/ceo-org-delegation.yaml` | CEO、工程/市场/产品/HR 部门负责人 | **CEO 组织架构协作**（决策→部门并行→汇总） |
 
 ## 项目生态
 

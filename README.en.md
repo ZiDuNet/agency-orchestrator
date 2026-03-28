@@ -398,7 +398,7 @@ Works with **14 AI coding tools** — install with one command:
 | **Antigravity** | `AGENTS.md` | `--tool antigravity` | [Guide](./integrations/antigravity/) |
 | **OpenClaw** | Skill mode | `--tool openclaw` | [Guide](./integrations/openclaw/) |
 
-## Workflow Templates (29)
+## Workflow Templates (30)
 
 ### Dev Workflows (7)
 
@@ -440,7 +440,7 @@ Works with **14 AI coding tools** — install with one command:
 | `legal/contract-review.yaml` | Contract Reviewer, Legal Compliance | **Contract review** (clause analysis → compliance → opinion) |
 | `hr/interview-questions.yaml` | Recruiter, Psychologist, Backend Architect | **Interview questions** (dimensions → parallel design → scorecard) |
 
-### General Workflows (9)
+### General Workflows (10)
 
 | Template | Roles | Description |
 |----------|-------|-------------|
@@ -453,6 +453,7 @@ Works with **14 AI coding tools** — install with one command:
 | `department-collab/content-publish.yaml` | Content Creator, Brand Guardian | Content publishing (review loop) |
 | `department-collab/incident-response.yaml` | SRE, Security Engineer, Backend Architect | Incident response |
 | `department-collab/marketing-campaign.yaml` | Strategist, Creator, Approver | Marketing campaign (human approval) |
+| `department-collab/ceo-org-delegation.yaml` | CEO, Engineering/Marketing/Product/HR Leads | **CEO org delegation** (decide → parallel depts → summary) |
 
 ## Output Structure
 
