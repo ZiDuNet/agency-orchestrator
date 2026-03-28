@@ -2,89 +2,104 @@
 
 **English** | [中文](./README.md)
 
-> **Multi-agent workflows in YAML — 186 AI roles, no API key needed (use your existing subscription)**
+> **You're already paying for AI. Why do you need another API key just to run a workflow?**
 
 [![CI](https://github.com/jnMetaCode/agency-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/jnMetaCode/agency-orchestrator/actions)
 [![npm version](https://img.shields.io/npm/v/agency-orchestrator)](https://www.npmjs.com/package/agency-orchestrator)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-> If you find this useful, please give it a **Star** — it helps others discover this project and motivates continued development.
+**186 expert AI roles · Zero-code YAML orchestration · Use your existing subscription · No API key required**
+
+```
+Claude Max ✓  ChatGPT Plus ✓  GitHub Copilot ✓  Google Account (free) ✓  Ollama ✓
+```
+
+> If you find this useful, please **Star** it — helps others discover the project.
 
 ---
 
-## What Is This?
+## Why Agency Orchestrator
 
-A lightweight engine that orchestrates multiple AI agents to collaborate on complex tasks. You define the workflow in YAML — which roles, what tasks, what order — and the engine handles parallel execution, variable passing, retries, and output management.
+**Sound familiar?**
 
-**No Python. No framework boilerplate. Just YAML.**
+- You want multiple AI agents to collaborate, but CrewAI/LangGraph require Python and defining every role from scratch
+- You set up the framework, then discover you **still need to get API keys, add credits, and manage quotas**
+- You're already paying $20/month for Claude Max / ChatGPT Plus / Copilot — but you can't use that subscription
 
-```yaml
-steps:
-  - id: analyze
-    role: "product/product-manager"          # 186 built-in roles
-    task: "Analyze this PRD:\n\n{{prd_content}}"
-    output: requirements
+**Agency Orchestrator's answer:**
 
-  - id: tech_review
-    role: "engineering/engineering-software-architect"
-    task: "Evaluate feasibility:\n\n{{requirements}}"
-    depends_on: [analyze]                    # auto DAG detection
+Write one YAML file → 186 expert roles collaborate automatically → runs on your **existing subscription**.
+
+> **Industry first: Every multi-agent framework out there (CrewAI, LangGraph, AutoGen, Dify, n8n, Agency Swarm, MetaGPT, Google ADK, OpenAI Agents SDK) requires API keys. Agency Orchestrator is the only one that lets you bring your subscription.**
+
+### 30-Second Comparison
+
+```python
+# CrewAI: ~50 lines of Python, define every role, API key required
+researcher = Agent(role="PM", goal="...", backstory="...(write it yourself)...")
+task = Task(description="...", agent=researcher)
+crew = Crew(agents=[researcher], tasks=[task])
+crew.kickoff()
 ```
 
-### vs CrewAI / LangGraph
+```yaml
+# Agency Orchestrator: 10 lines of YAML, 186 roles ready to go, no API key
+steps:
+  - id: analyze
+    role: "product/product-manager"   # expert prompt already written
+    task: "Analyze this PRD: {{prd_content}}"
+```
 
-| | CrewAI | LangGraph | **Agency Orchestrator** |
-|---|--------|-----------|---------------------|
-| Language | Python | Python | **YAML (zero code)** |
-| Roles | Write your own | Write your own | **186 ready-to-use** |
-| API Key | **Required** | **Required** | **6 providers need no API key** |
-| Dependencies | pip + LiteLLM + dozens | pip + LangChain | **npm + 2 deps** |
-| Models | LiteLLM | LangChain | **9 native LLM providers** |
-| Parallelism | Manager mode | Manual graph | **Auto DAG detection** |
-| Branching | None | Manual | **Condition expressions** |
-| Loops | None | Manual | **Declarative loop/exit** |
-| Resume | None | Checkpointers | **Built-in `--resume` + `--from`** |
-| Price | Open-source + $25-99/mo cloud | Open-source | **Completely free** |
+| | CrewAI | LangGraph | AutoGen | **Agency Orchestrator** |
+|---|--------|-----------|---------|---------------------|
+| Language | Python | Python | Python | **YAML (zero code)** |
+| Roles | Write your own | Write your own | Write your own | **186 ready-to-use** |
+| API Key | Required | Required | Required | **6 providers need none** |
+| Dependencies | pip + LiteLLM + dozens | pip + LangChain | pip + AutoGen | **npm + 2 deps** |
+| Parallelism | Manager mode | Manual graph | Manual | **Auto DAG detection** |
+| Branching | None | Manual | Manual | **Condition expressions** |
+| Loops | None | Manual | Manual | **Declarative loop/exit** |
+| Resume | None | Checkpointers | None | **Built-in `--resume`** |
+| Price | Open-source + $25-99/mo | Open-source | Open-source | **Completely free** |
 
-## Quick Start
+## Get Started in 3 Steps
 
-### Fastest: Zero-Config Demo
+### Step 1: Try it in 5 seconds
 
 ```bash
 npx agency-orchestrator demo
 ```
 
-See 4 AI roles collaborate on a story in 5 seconds — no API key needed. Then optionally run with a real LLM.
+4 AI roles collaborate on a story. No install, no config, no API key.
 
-### Option A: Inside Any AI Coding Tool (No API key needed)
-
-Your AI coding tool's built-in LLM serves as the execution engine:
-
-```bash
-git clone --depth 1 https://github.com/jnMetaCode/agency-agents-zh.git
-
-# Auto-detect and install workflow-runner for your tools
-./scripts/install.sh                       # auto-detect
-./scripts/install.sh --tool cursor         # or specify
-```
-
-Then tell your AI: `Run workflows/story-creation.yaml with premise="A time travel story"`
-
-### Option B: CLI Mode
+### Step 2: Run a real workflow with your subscription
 
 ```bash
 npm install agency-orchestrator
 npx ao init                    # download 186 AI roles
 
-# ⭐ Use Claude Max subscription directly (no API key!)
-npx ao run workflows/story-creation.yaml --input premise="A time travel story"
-# Just set provider: "claude-code" in your YAML
-
-# Or use an API (DeepSeek / Claude / OpenAI)
-export DEEPSEEK_API_KEY=your-key
+# Use your existing Claude Max subscription (no API key!)
 npx ao run workflows/story-creation.yaml --input premise="A time travel story"
 ```
+
+Just set `provider: "claude-code"` in your YAML. No Claude? Use `gemini-cli` (free with Google account), `copilot-cli`, or `codex-cli`.
+
+### Step 3: Use it inside your AI coding tool
+
+```bash
+./scripts/install.sh           # one-command install for your AI tools
+```
+
+Then tell Cursor / Claude Code / Copilot:
+
+```
+Run workflows/story-creation.yaml with premise="A time travel story"
+```
+
+It auto-parses YAML → loads roles → executes in DAG order → saves results.
+
+**Works with 14 AI coding tools** ([integration guides](./integrations/)): Claude Code · GitHub Copilot · Cursor · Windsurf · Kiro · Trae · Aider · Gemini CLI · Codex CLI · OpenCode · Qwen Code · DeerFlow 2.0 · Antigravity · OpenClaw
 
 ## Demo: 4 AI Roles Write a Complete Story in 2 Minutes
 
@@ -258,30 +273,28 @@ Each round creates a new timestamped output directory. All versions are preserve
 | Re-run only failed steps | `ao run workflow.yaml --resume last` |
 | Resume specific version | `ao run workflow.yaml --resume ao-output/<dir>/ --from <step-id>` |
 
-## Supported LLMs — 9 Providers, 6 Need No API Key
+## 9 LLM Providers — 6 Need No API Key
 
-### ⭐ No API Key Needed (use subscription / free quota)
+**Already paying for one of these? You're ready to go:**
 
-| Provider | Config | Install | Notes |
-|----------|--------|---------|-------|
-| **Claude Code** | `provider: "claude-code"` | `npm i -g @anthropic-ai/claude-code` | Uses Claude Max/Pro subscription |
-| **Gemini CLI** | `provider: "gemini-cli"` | `npm i -g @google/gemini-cli` | **Free with Google account** (1000 req/day, Gemini 2.5 Pro) |
-| **Copilot CLI** | `provider: "copilot-cli"` | `npm i -g @github/copilot` | Uses GitHub Copilot subscription |
-| **Codex CLI** | `provider: "codex-cli"` | `npm i -g @openai/codex` | Uses ChatGPT Plus/Pro subscription |
-| **OpenClaw CLI** | `provider: "openclaw-cli"` | `npm i -g openclaw` | Multi-model gateway with OAuth + API key auth |
-| **Ollama** | `provider: "ollama"` | [ollama.ai](https://ollama.ai) | Local models, completely free |
+| You have... | Provider config | Install CLI | Cost to you |
+|------------|----------------|-------------|-------------|
+| Claude Max/Pro ($20/mo) | `provider: "claude-code"` | `npm i -g @anthropic-ai/claude-code` | **$0 extra** |
+| Google Account | `provider: "gemini-cli"` | `npm i -g @google/gemini-cli` | **Free** (1000 req/day, Gemini 2.5 Pro) |
+| GitHub Copilot ($10/mo) | `provider: "copilot-cli"` | `npm i -g @github/copilot` | **$0 extra** |
+| ChatGPT Plus/Pro ($20/mo) | `provider: "codex-cli"` | `npm i -g @openai/codex` | **$0 extra** |
+| OpenClaw account | `provider: "openclaw-cli"` | `npm i -g openclaw` | **$0 extra** |
+| A computer | `provider: "ollama"` | [ollama.ai](https://ollama.ai) | **Free** (local models) |
 
-### API Key Required
+**Or use traditional API keys:**
 
 | Provider | Config | Env Variable |
 |----------|--------|-------------|
-| **DeepSeek** | `provider: "deepseek"` | `DEEPSEEK_API_KEY` |
-| **Claude API** | `provider: "claude"` | `ANTHROPIC_API_KEY` |
-| **OpenAI** | `provider: "openai"` | `OPENAI_API_KEY` |
+| DeepSeek | `provider: "deepseek"` | `DEEPSEEK_API_KEY` |
+| Claude API | `provider: "claude"` | `ANTHROPIC_API_KEY` |
+| OpenAI | `provider: "openai"` | `OPENAI_API_KEY` |
 
-> **⭐ Industry first: Got a subscription? Just use it!** Every other framework (CrewAI / LangGraph / AutoGen / Dify / n8n) requires API keys. Agency Orchestrator is the only one that lets you bring your existing subscription — Claude Max, ChatGPT Plus, GitHub Copilot, or even a free Google account.
-
-All API providers support custom `base_url` and `api_key`, compatible with any OpenAI-compatible API (Zhipu, Moonshot, etc.).
+All API providers support custom `base_url` and `api_key`, compatible with any OpenAI-compatible API.
 
 ## CLI Reference
 
@@ -492,6 +505,16 @@ ao-output/product-review-2026-03-22/
 ```
 
 ## Ecosystem
+
+```
+Your AI subscription ──→ agency-orchestrator ──→ 186 expert roles collaborate ──→ quality output
+                              │
+             ┌────────────────┼────────────────┐
+             ▼                ▼                ▼
+      14 AI Coding Tools    CLI Mode        MCP Server
+      (Cursor/Claude Code   (automation/    (Claude Code/
+       /Copilot/...)        CI/CD)          Cursor direct)
+```
 
 | Project | Description |
 |---------|-------------|

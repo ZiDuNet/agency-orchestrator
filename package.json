@@ -1,7 +1,7 @@
 {
   "name": "agency-orchestrator",
   "version": "0.4.0",
-  "description": "YAML 编排 AI 工作流 — 186 个专业角色、自动 DAG 并行、零代码。9 种 LLM（6 种免 API key：Claude Code / Gemini / Copilot / Codex / OpenClaw / Ollama）+ 14 个 AI 编程工具集成",
+  "description": "Multi-agent YAML workflow engine — 186 AI roles, auto DAG parallelism, zero code. Use your existing subscription (Claude Max / ChatGPT Plus / Copilot / Gemini free) — no API key needed. Industry first.",
   "keywords": [
     "multi-agent",
     "ai-agents",

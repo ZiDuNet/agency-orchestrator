@@ -2,27 +2,41 @@
 
 **中文** | [English](./README.en.md)
 
-> **不用写代码的 AI 团队 — 186 个专业角色，YAML 编排，有会员就能跑（免 API key）**
+> **你已经为 AI 付了月费。为什么跑个工作流还要再掏 API key 的钱？**
 
 [![CI](https://github.com/jnMetaCode/agency-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/jnMetaCode/agency-orchestrator/actions)
 [![npm version](https://img.shields.io/npm/v/agency-orchestrator)](https://www.npmjs.com/package/agency-orchestrator)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-> 觉得有用的话，请点个 **Star** 支持一下 — 这是对开源作者最大的鼓励，也能帮助更多人发现这个项目。
+**186 个专业 AI 角色 · YAML 零代码编排 · 有会员就能跑 · 免 API key**
+
+```
+Claude Max ✓  ChatGPT Plus ✓  GitHub Copilot ✓  Google 账号（免费）✓  Ollama ✓
+```
+
+> 觉得有用？请点个 **Star** — 帮助更多人发现这个项目。
 
 ---
 
-## 解决什么问题
+## 为什么需要 Agency Orchestrator
 
-[agency-agents-zh](https://github.com/jnMetaCode/agency-agents-zh) 提供了 **186 个专业 AI 角色**（产品经理、工程师、设计师、小红书运营……），但每个角色只能独立工作。真实任务需要**协作** — 谁先谁后、怎么交接、什么时候并行。
+**你遇到过这些问题吗？**
 
-Agency Orchestrator 让你用一个 YAML 文件编排多 AI 协作。不用写 Python，不用学框架，写 YAML 就行。**而且不需要 API key** — 有 Claude Max、ChatGPT Plus、GitHub Copilot 会员，或者 Google 账号（免费），装好 CLI 就能跑。
+- 想让多个 AI 角色协作，但 CrewAI/LangGraph 要写 Python，还要花时间定义每个角色
+- 装好了框架，发现**还要去申请 API key、充值、管额度**
+- 你明明已经有 Claude Max / ChatGPT Plus / Copilot 会员了，却用不上
 
-### 对比 CrewAI
+**Agency Orchestrator 的答案：**
+
+写一个 YAML 文件 → 186 个专业角色自动协作 → 用你**已有的会员**直接跑。
+
+> **行业首创：全球所有多智能体框架（CrewAI / LangGraph / AutoGen / Dify / n8n / Agency Swarm / MetaGPT / Google ADK / OpenAI Agents SDK）都要求 API key。只有 Agency Orchestrator 让你带着订阅来用。**
+
+### 30 秒对比
 
 ```python
-# CrewAI: 要写 ~50 行 Python，每个角色从零定义
+# CrewAI: ~50 行 Python，角色从零写，必须有 API key
 researcher = Agent(role="PM", goal="...", backstory="...(你自己写)...")
 task = Task(description="...", agent=researcher)
 crew = Crew(agents=[researcher], tasks=[task])
@@ -30,96 +44,60 @@ crew.kickoff()
 ```
 
 ```yaml
-# Agency Orchestrator: 10 行 YAML，186 个角色开箱即用
+# Agency Orchestrator: 10 行 YAML，186 个角色开箱即用，无需 API key
 steps:
   - id: analyze
     role: "product/product-manager"   # 现成角色，专业 prompt 已写好
     task: "分析这个 PRD：{{prd_content}}"
 ```
 
-| | CrewAI | LangGraph | **Agency Orchestrator** |
-|---|--------|-----------|---------------------|
-| 语言 | Python | Python | **YAML（零代码）** |
-| 角色 | 自己写 | 自己写 | **186 个现成角色** |
-| API key | **必须** | **必须** | **6 种免 API key（会员直接用）** |
-| 依赖 | pip + LiteLLM + 几十个包 | pip + LangChain | **npm + 2 个依赖** |
-| 中文角色 | 没有 | 没有 | **186 个（44 个中国原创）** |
-| 模型 | LiteLLM（常出 bug） | LangChain | **原生 9 种 LLM** |
-| 并行 | Manager 模式（有缺陷） | 手动建图 | **DAG 自动检测** |
-| 价格 | 开源 + $25-99/月云版 | 开源 | **完全免费** |
+| | CrewAI | LangGraph | AutoGen | **Agency Orchestrator** |
+|---|--------|-----------|---------|---------------------|
+| 语言 | Python | Python | Python | **YAML（零代码）** |
+| 角色 | 自己写 | 自己写 | 自己写 | **186 个现成** |
+| API key | 必须 | 必须 | 必须 | **6 种免 API key** |
+| 依赖 | pip + LiteLLM + 几十个包 | pip + LangChain | pip + AutoGen | **npm + 2 个依赖** |
+| 中文角色 | 无 | 无 | 无 | **186 个（44 个中国原创）** |
+| 并行 | Manager 模式 | 手动建图 | 手动 | **DAG 自动检测** |
+| 价格 | 开源 + $25-99/月云版 | 开源 | 开源 | **完全免费** |
 
-## 快速开始
+## 3 步开始
 
-### 最快体验：零配置 Demo
+### 第 1 步：5 秒体验
 
 ```bash
 npx agency-orchestrator demo
 ```
 
-5 秒内看到 4 个 AI 角色协作写小说 — 无需 API key。然后可选择用真实 LLM 运行。
+4 个 AI 角色协作写小说。无需安装、无需配置、无需 API key。
 
-### 方式一：在 AI 编程工具中直接用（无需 API key）
-
-如果你已经在 AI 编程工具中，**不需要配置任何 API key**，工具自带的 LLM 就是执行引擎：
+### 第 2 步：用你的会员跑真实工作流
 
 ```bash
-# 安装角色定义
-git clone --depth 1 https://github.com/jnMetaCode/agency-agents-zh.git
+npm install agency-orchestrator
+npx ao init                    # 下载 186 个 AI 角色
 
-# 一键安装 workflow-runner 到你的工具
-./scripts/install.sh                       # 自动检测已安装的工具
-./scripts/install.sh --tool cursor         # 或指定工具
+# 用你已有的 Claude Max 会员（无需 API key！）
+npx ao run workflows/story-creation.yaml --input premise='一个时间旅行的故事'
 ```
 
-然后在 AI 工具中直接说：
+只需在 YAML 中写 `provider: "claude-code"`。没有 Claude？用 `gemini-cli`（Google 账号免费）、`copilot-cli`、`codex-cli` 都行。
+
+### 第 3 步：在 AI 编程工具中直接说
+
+```bash
+./scripts/install.sh           # 一键安装到你的 AI 编程工具
+```
+
+然后在 Cursor / Claude Code / Copilot 中直接说：
 
 ```
 运行 workflows/story-creation.yaml，创意是"一个程序员在凌晨发现AI回复不该知道的事"
 ```
 
-AI 会自动解析 YAML → 加载角色 → 按 DAG 顺序执行 → 保存结果。零配置。
+AI 会自动解析 YAML → 加载角色 → 按 DAG 顺序执行 → 保存结果。
 
-支持 **14 个 AI 编程工具**（[集成指南](./integrations/)）：
-
-| 工具 | 配置位置 | 安装命令 |
-|------|---------|---------|
-| [Claude Code](./integrations/claude-code/) | Skill 模式 | `npx superpowers-zh` |
-| [GitHub Copilot](./integrations/copilot/) | `.github/copilot-instructions.md` | `./scripts/install.sh --tool copilot` |
-| [Cursor](./integrations/cursor/) | `.cursor/rules/` | `./scripts/install.sh --tool cursor` |
-| [Windsurf](./integrations/windsurf/) | `.windsurfrules` | `./scripts/install.sh --tool windsurf` |
-| [Kiro](./integrations/kiro/) | `.kiro/steering/` | `./scripts/install.sh --tool kiro` |
-| [Trae](./integrations/trae/) | `.trae/rules/` | `./scripts/install.sh --tool trae` |
-| [Aider](./integrations/aider/) | `CONVENTIONS.md` | `./scripts/install.sh --tool aider` |
-| [Gemini CLI](./integrations/gemini-cli/) | `GEMINI.md` | `./scripts/install.sh --tool gemini-cli` |
-| [Codex CLI](./integrations/codex/) | `.codex/instructions.md` | `./scripts/install.sh --tool codex` |
-| [OpenCode](./integrations/opencode/) | `.opencode/instructions.md` | `./scripts/install.sh --tool opencode` |
-| [Qwen Code](./integrations/qwen/) | `.qwen/rules/` | `./scripts/install.sh --tool qwen` |
-| [DeerFlow 2.0](./integrations/deerflow/) | `skills/custom/` | `./scripts/install.sh --tool deerflow` |
-| [Antigravity](./integrations/antigravity/) | `AGENTS.md` | `./scripts/install.sh --tool antigravity` |
-| [OpenClaw](./integrations/openclaw/) | Skill 模式 | `./scripts/install.sh --tool openclaw` |
-
-### 方式二：CLI 模式
-
-用于自动化、批量执行、CI/CD：
-
-```bash
-# 安装
-npm install agency-orchestrator
-
-# 下载 186 个 AI 角色
-npx ao init
-
-# 查看执行计划
-npx ao plan workflows/product-review.yaml
-
-# ⭐ 用 Claude Max 会员直接跑（无需 API key）
-npx ao run workflows/story-creation.yaml --input premise='一个时间旅行的故事'
-# 只需在 YAML 中设置 provider: "claude-code"
-
-# 或用 API（DeepSeek / Claude / OpenAI）
-export DEEPSEEK_API_KEY=your-key
-npx ao run workflows/story-creation.yaml --input premise='一个时间旅行的故事'
-```
+**支持 14 个 AI 编程工具**（[集成指南](./integrations/)）：Claude Code · GitHub Copilot · Cursor · Windsurf · Kiro · Trae · Aider · Gemini CLI · Codex CLI · OpenCode · Qwen Code · DeerFlow 2.0 · Antigravity · OpenClaw
 
 ## 真实演示：4 个 AI 角色 2 分钟写出完整小说
 
@@ -208,28 +186,26 @@ analyze ──→ tech_review  ──→ summary
           (并行)
 ```
 
-## 支持的 LLM — 9 种，6 种免 API key
+## 9 种 LLM — 6 种不需要 API key
 
-### ⭐ 免 API key（直接用订阅 / 免费额度）
+**你已经有这些会员了吧？直接就能跑：**
 
-| 提供商 | 配置 | 安装 | 说明 |
-|--------|------|------|------|
-| **Claude Code** | `provider: "claude-code"` | `npm i -g @anthropic-ai/claude-code` | Claude Max/Pro 会员直接用 |
-| **Gemini CLI** | `provider: "gemini-cli"` | `npm i -g @google/gemini-cli` | **Google 账号免费**（1000 次/天，Gemini 2.5 Pro） |
-| **Copilot CLI** | `provider: "copilot-cli"` | `npm i -g @github/copilot` | GitHub Copilot 会员直接用 |
-| **Codex CLI** | `provider: "codex-cli"` | `npm i -g @openai/codex` | ChatGPT Plus/Pro 会员直接用 |
-| **OpenClaw CLI** | `provider: "openclaw-cli"` | `npm i -g openclaw` | 多模型网关，OAuth + API key 灵活认证 |
-| **Ollama** | `provider: "ollama"` | [ollama.ai](https://ollama.ai) | 本地模型，完全免费 |
+| 你有... | YAML 配置 | 安装 CLI | 额外费用 |
+|---------|----------|---------|---------|
+| Claude Max/Pro（$20/月） | `provider: "claude-code"` | `npm i -g @anthropic-ai/claude-code` | **不花钱** |
+| Google 账号 | `provider: "gemini-cli"` | `npm i -g @google/gemini-cli` | **免费**（1000 次/天，Gemini 2.5 Pro） |
+| GitHub Copilot（$10/月） | `provider: "copilot-cli"` | `npm i -g @github/copilot` | **不花钱** |
+| ChatGPT Plus/Pro（$20/月） | `provider: "codex-cli"` | `npm i -g @openai/codex` | **不花钱** |
+| OpenClaw 账号 | `provider: "openclaw-cli"` | `npm i -g openclaw` | **不花钱** |
+| 一台电脑 | `provider: "ollama"` | [ollama.ai](https://ollama.ai) | **免费**（本地模型） |
 
-### 需 API key
+**也支持传统 API key：**
 
 | 提供商 | 配置 | 环境变量 |
 |--------|------|---------|
-| **DeepSeek** | `provider: "deepseek"` | `DEEPSEEK_API_KEY` |
-| **Claude API** | `provider: "claude"` | `ANTHROPIC_API_KEY` |
-| **OpenAI** | `provider: "openai"` | `OPENAI_API_KEY` |
-
-> **⭐ 行业首创：有会员就能用，不需要 API key！** 全行业（CrewAI / LangGraph / AutoGen / Dify / n8n）都要求 API key，只有 Agency Orchestrator 支持"带着订阅来用"——Claude Max、ChatGPT Plus、GitHub Copilot、甚至 Google 账号免费额度，装好 CLI 就能跑工作流。
+| DeepSeek | `provider: "deepseek"` | `DEEPSEEK_API_KEY` |
+| Claude API | `provider: "claude"` | `ANTHROPIC_API_KEY` |
+| OpenAI | `provider: "openai"` | `OPENAI_API_KEY` |
 
 所有 API 提供商支持自定义 `base_url` 和 `api_key`，兼容智谱、月之暗面等 OpenAI 兼容 API。
 
@@ -530,21 +506,13 @@ ao-output/产品需求评审-2026-03-22/
 ## 项目生态
 
 ```
-                    agency-agents-zh（186 个 AI 角色定义）
-                            │
-    ┌───────────┬───────────┼───────────┬───────────┐
-    ▼           ▼           ▼           ▼           ▼
- Claude Code  Copilot    Cursor    Windsurf     Aider     ← 14 个 AI 编程工具
- Kiro  Trae  Gemini CLI  Codex  OpenCode  Qwen  DeerFlow  Antigravity  OpenClaw
-    (workflow-runner 技能 / 规则文件)
-              │
-              ▼
-      agency-orchestrator（YAML 工作流引擎）
-              │
-              ▼
-      Claude Code / Gemini CLI / Copilot CLI / Codex CLI / OpenClaw（⭐ 免 API key）
-              │
-      DeepSeek / Claude API / OpenAI / Ollama
+你的 AI 会员 ──→ agency-orchestrator ──→ 186 个专业角色协作 ──→ 高质量输出
+                     │
+    ┌────────────────┼────────────────┐
+    ▼                ▼                ▼
+  14 个 AI 编程工具    CLI 模式         MCP Server
+  (Cursor/Claude     (自动化/CI/CD)   (Claude Code/
+   Code/Copilot...)                   Cursor 直接调用)
 ```
 
 ## 社区交流
