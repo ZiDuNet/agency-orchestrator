@@ -16,7 +16,7 @@ export class OllamaConnector implements LLMConnector {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: config.model,
+        model: config.model || 'llama3.1',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage },

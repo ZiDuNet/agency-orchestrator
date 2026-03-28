@@ -28,7 +28,7 @@ export class OpenAICompatibleConnector implements LLMConnector {
         'Authorization': `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify({
-        model: config.model,
+        model: config.model!,
         max_tokens: config.max_tokens || 4096,
         messages: [
           { role: 'system', content: systemPrompt },

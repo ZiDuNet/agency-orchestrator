@@ -23,7 +23,7 @@ export class ClaudeConnector implements LLMConnector {
 
   async chat(systemPrompt: string, userMessage: string, config: LLMConfig): Promise<LLMResult> {
     const response = await this.client.messages.create({
-      model: config.model,
+      model: config.model!,
       max_tokens: config.max_tokens || 4096,
       system: systemPrompt,
       messages: [

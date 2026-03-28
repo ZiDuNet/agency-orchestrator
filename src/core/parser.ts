@@ -24,8 +24,13 @@ export function parseWorkflow(filePath: string): WorkflowDefinition {
   }
 
   const llm = doc.llm as Record<string, unknown>;
-  if (!llm.provider || !llm.model) {
-    throw new Error('llm 配置缺少 provider 或 model');
+  if (!llm.provider) {
+    throw new Error('llm 配置缺少 provider');
+  }
+  // CLI providers (claude-code, gemini-cli, copilot-cli, codex-cli, openclaw-cli) 和 ollama 不需要 model
+  const cliProviders = ['claude-code', 'gemini-cli', 'copilot-cli', 'codex-cli', 'openclaw-cli', 'ollama'];
+  if (!llm.model && !cliProviders.includes(llm.provider as string)) {
+    throw new Error('llm 配置缺少 model（CLI provider 可省略）');
   }
 
   // 校验每个 step
