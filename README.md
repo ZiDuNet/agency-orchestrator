@@ -217,6 +217,7 @@ ao init                              # 下载 179 个中文 AI 角色
 ao init --lang en                    # 下载 217 个英文 AI 角色
 ao init --workflow                    # 交互式创建工作流
 ao compose "一句话描述"                # AI 智能编排工作流
+ao compose "一句话描述" --run          # 编排并立即执行
 ao run <workflow.yaml> [选项]          # 执行工作流
 ao validate <workflow.yaml>           # 校验（不执行）
 ao plan <workflow.yaml>               # 查看执行计划（DAG）
@@ -253,99 +254,27 @@ AI 会自动：
 
 ### 迭代优化（Resume）
 
-**问题**：`ao run` 跑完一轮后，所有步骤的输出都丢了。想基于叙事学家的结构重写小说，只能整个工作流从头跑。
-
-**解决**：`--resume` 会自动加载上一轮所有步骤的输出，`--from` 指定从哪步开始重跑。之前的步骤直接用缓存结果，不会重新执行。
-
-#### 完整示例：小说创作 4 轮迭代
-
-以 `story-creation.yaml` 为例，DAG 结构如下：
-
-```
-story_structure ──→ character_design ──→ write_story
-                └→ conflict_design  ──┘
-                    (并行)
-```
-
-**第一轮：正常运行**
+跑完一轮觉得某步不满意？不用从头来。`--resume` 加载上一轮输出，`--from` 指定从哪步重跑：
 
 ```bash
-ao run workflows/story-creation.yaml \
-  -i premise='一个程序员在凌晨三点发现AI开始回复不该知道的事情'
+# 第一轮：正常运行
+ao run workflows/一人公司全员大会.yaml -i idea="用AI帮小商家做短视频"
+
+# 觉得营销方案不够好？只重跑营销和后续步骤
+ao run workflows/一人公司全员大会.yaml --resume last --from marketing_plan
+
+# 只改最终汇总
+ao run workflows/一人公司全员大会.yaml --resume last --from launch_decision
 ```
 
-运行完后，每步输出保存在 `ao-output/` 下：
-
-```
-ao-output/短篇小说创作-2026-03-24T14-30-00/
-├── summary.md                    ← 最终小说
-├── metadata.json                 ← 每步状态 + 变量映射
-├── steps/
-│   ├── 1-story_structure.md      ← 叙事学家的结构设计
-│   ├── 2-character_design.md     ← 心理学家的人物设定
-│   ├── 3-conflict_design.md      ← 叙事设计师的冲突场景
-│   └── 4-write_story.md          ← 最终小说
-```
-
-打开这些文件看每步输出，觉得哪里不满意就重跑那步。
-
-**第二轮：人物太单薄，从人物设计开始重跑**
-
-```bash
-ao run workflows/story-creation.yaml --resume last --from character_design
-```
-
-- `--resume last`：自动找到最近一次输出
-- `--from character_design`：从人物设计开始重跑
-- `story_structure` 的输出（叙事结构）直接复用，不重新执行
-- `character_design` → `conflict_design` → `write_story` 重新执行
-- 新的输出保存到新的时间戳目录
-
-**第三轮：结构和人物都好，只改最终写作**
-
-```bash
-ao run workflows/story-creation.yaml --resume last --from write_story
-```
-
-只重跑最后一步。叙事结构、人物设定、冲突设计全部复用，只让内容创作者重写。
-
-**第四轮：想回到第二轮的版本继续改**
-
-```bash
-ao run workflows/story-creation.yaml \
-  --resume ao-output/短篇小说创作-2026-03-24T14-35-00/ \
-  --from write_story
-```
-
-指定具体目录，基于那个版本继续迭代。
-
-#### 所有历史版本都保留
-
-```bash
-ls ao-output/
-# 短篇小说创作-2026-03-24T14-30-00/   ← 第一轮
-# 短篇小说创作-2026-03-24T14-35-00/   ← 第二轮
-# 短篇小说创作-2026-03-24T14-38-00/   ← 第三轮
-# 短篇小说创作-2026-03-24T14-40-00/   ← 第四轮
-```
-
-#### 用法速查
+每轮输出保存在 `ao-output/` 下独立目录，所有版本都保留，随时可以回溯。
 
 | 场景 | 命令 |
 |------|------|
 | 第一次运行 | `ao run workflow.yaml -i key=value` |
-| 从某步重跑（基于上次结果） | `ao run workflow.yaml --resume last --from <步骤ID>` |
+| 从某步重跑 | `ao run workflow.yaml --resume last --from <步骤ID>` |
 | 只重跑失败的步骤 | `ao run workflow.yaml --resume last` |
 | 基于指定版本重跑 | `ao run workflow.yaml --resume ao-output/具体目录/ --from <步骤ID>` |
-
-#### 原理
-
-`--resume` 做了三件事：
-1. 读取指定目录的 `metadata.json`，获取每步的状态和输出变量名
-2. 从 `steps/` 目录读取已完成步骤的输出内容，注入回 `{{变量}}` 上下文
-3. 标记 `--from` 之前的步骤为"已完成"，跳过执行
-
-智能体结构（角色分工、DAG 依赖、变量传递）不会丢失 — 它定义在 YAML 里，每次都会重新加载。丢失的只是上一轮的**输出内容**，`--resume` 就是把这些内容恢复回来。
 
 ## 编程 API
 
@@ -520,8 +449,8 @@ ao-output/产品需求评审-2026-03-22/
 
 | 项目 | 说明 |
 |------|------|
-| [agency-agents](https://github.com/msitarzewski/agency-agents) | 217 个英文 AI 角色定义 by [@msitarzewski](https://github.com/msitarzewski) — 本引擎的英文角色库 |
 | [agency-agents-zh](https://github.com/jnMetaCode/agency-agents-zh) | 179 个中文 AI 角色定义 — 本引擎的中文角色库 |
+| [agency-agents](https://github.com/msitarzewski/agency-agents) | 217 个英文 AI 角色定义 by [@msitarzewski](https://github.com/msitarzewski) — 本引擎的英文角色库 |
 | [ai-coding-guide](https://github.com/jnMetaCode/ai-coding-guide) | AI 编程工具实战指南 — 66 个 Claude Code 技巧 + 9 款工具最佳实践 + 可复制配置模板 |
 | [superpowers-zh](https://github.com/jnMetaCode/superpowers-zh) | AI 编程超能力 · 中文版 — 20 个 skills，让你的 AI 编程助手真正会干活 |
 | [shellward](https://github.com/jnMetaCode/shellward) | AI 智能体安全中间件 — 注入检测、数据防泄露、命令安全、零依赖、MCP Server |

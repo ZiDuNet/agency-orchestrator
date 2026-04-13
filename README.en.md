@@ -136,7 +136,7 @@ Of the 6 roles, Market Researcher and User Researcher **run in parallel** (auto-
 
 ```yaml
 name: "Product Requirements Review"
-agents_dir: "agency-agents-zh"
+agents_dir: "agency-agents"      # or "agency-agents-zh" for Chinese roles
 
 llm:
   provider: "deepseek"          # No API key: claude-code / gemini-cli / copilot-cli / codex-cli / ollama
@@ -177,7 +177,7 @@ The engine automatically:
 1. Parses YAML → builds a **DAG** (directed acyclic graph)
 2. Detects parallelism — `tech_review` and `design_review` run concurrently
 3. Passes outputs between steps via `{{variables}}`
-4. Loads role definitions from [agency-agents-zh](https://github.com/jnMetaCode/agency-agents-zh) as system prompts
+4. Loads role definitions from [agency-agents](https://github.com/msitarzewski/agency-agents) (or [agency-agents-zh](https://github.com/jnMetaCode/agency-agents-zh)) as system prompts
 5. Retries on failure (exponential backoff)
 6. Saves all outputs to `ao-output/`
 
@@ -255,25 +255,20 @@ Add `--run` to generate and execute in one command. Supports `--provider` and `-
 
 ### Resume & Iterate
 
-**Problem**: After `ao run` completes, all step outputs are lost. To tweak the final story, you'd have to re-run everything from scratch.
-
-**Solution**: `--resume` reloads previous outputs. `--from` specifies where to restart.
+Not happy with a step? No need to start over. `--resume` reloads previous outputs, `--from` specifies where to restart:
 
 ```bash
 # Round 1: Normal run
-ao run workflows/story-creation.yaml -i premise="A time travel story"
+ao run workflows/一人公司全员大会.yaml -i idea="AI-powered resume builder for job seekers"
 
-# Round 2: Characters feel flat — re-run from character_design
-ao run workflows/story-creation.yaml --resume last --from character_design
+# Marketing plan needs work? Re-run from that step
+ao run workflows/一人公司全员大会.yaml --resume last --from marketing_plan
 
-# Round 3: Only rewrite the final prose
-ao run workflows/story-creation.yaml --resume last --from write_story
-
-# Round 4: Go back to a specific version
-ao run workflows/story-creation.yaml --resume ao-output/<dir>/ --from write_story
+# Only redo the final summary
+ao run workflows/一人公司全员大会.yaml --resume last --from launch_decision
 ```
 
-Each round creates a new timestamped output directory. All versions are preserved.
+Each round saves to a new timestamped directory in `ao-output/`. All versions are preserved.
 
 | Scenario | Command |
 |----------|---------|
