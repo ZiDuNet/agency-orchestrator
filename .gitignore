@@ -7,3 +7,5 @@ ao-output/
 .private/
 .local/
 .claude/
+marketing/
+*.cast

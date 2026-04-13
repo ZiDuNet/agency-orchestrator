@@ -2,106 +2,125 @@
 
 **English** | [中文](./README.md)
 
-> **You're already paying for AI. Why do you need another API key just to run a workflow?**
+> **One sentence in, a full plan out — multiple AI roles collaborate automatically.**
 
 [![CI](https://github.com/jnMetaCode/agency-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/jnMetaCode/agency-orchestrator/actions)
 [![npm version](https://img.shields.io/npm/v/agency-orchestrator)](https://www.npmjs.com/package/agency-orchestrator)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-**186 expert AI roles · Zero-code YAML orchestration · Use your existing subscription · No API key required**
-
-```
-Claude Max ✓  ChatGPT Plus ✓  GitHub Copilot ✓  Google Account (free) ✓  Ollama ✓
-```
+**One sentence → full plan · 179 expert AI roles · Zero-code YAML · 9 LLM providers · 6 need no API key**
 
 > If you find this useful, please **Star** it — helps others discover the project.
+
+<p align="center">
+  <img src="./demo.gif" alt="ao compose --run demo" width="700">
+</p>
+
+---
+
+## One Sentence, Full Result
+
+```bash
+ao compose "I'm a programmer looking to start a side hustle with AI content, target $3K/month, give me a complete plan" --run
+```
+
+5 AI roles collaborate automatically:
+
+```
+  Workflow: Programmer AI Side Hustle Plan
+  Steps: 5 | Model: claude-code
+  Roles: 🔭 Trend Researcher | 📱 Platform Analyst | 💰 Financial Planner | ✍️ Content Strategist | 📋 Execution Planner
+──────────────────────────────────────────────────
+
+  ✅ 🔭 Trend Researcher   31.3s  → 6 niches compared by competition/ceiling/AI leverage
+  ✅ 📱 Platform Analyst    32.0s  → 6 platforms scored, recommends "YouTube + Newsletter" combo
+  ✅ 💰 Financial Planner   31.8s  → $3K/mo breakdown: course $1,800 + community $600 + consulting $600
+  ✅ ✍️ Content Strategist   44.6s  → 20 topics + 4 headline formulas + content SOP
+  ✅ 📋 Execution Planner   42.2s  → 90-day action plan, day-by-day
+
+==================================================
+  Done: 5/5 steps | 182.1s | 6,493 tokens
+==================================================
+```
+
+**No code. No config. No role selection.** One sentence → AI auto-decomposes the task → matches roles from 179 experts → executes as DAG → outputs a complete plan.
 
 ---
 
 ## Why Agency Orchestrator
 
-**Sound familiar?**
+Chatting with one AI gives you one perspective. But any real decision needs product, engineering, finance, and marketing perspectives...
 
-- You want multiple AI agents to collaborate, but CrewAI/LangGraph require Python and defining every role from scratch
-- You set up the framework, then discover you **still need to get API keys, add credits, and manage quotas**
-- You're already paying $20/month for Claude Max / ChatGPT Plus / Copilot — but you can't use that subscription
+**Agency Orchestrator = multiple AI experts working in parallel, then synthesized. One person vs. a whole team.**
 
-**Agency Orchestrator's answer:**
-
-Write one YAML file → 186 expert roles collaborate automatically → runs on your **existing subscription**.
-
-> **Industry first: Every multi-agent framework out there (CrewAI, LangGraph, AutoGen, Dify, n8n, Agency Swarm, MetaGPT, Google ADK, OpenAI Agents SDK) requires API keys. Agency Orchestrator is the only one that lets you bring your subscription.**
-
-### 30-Second Comparison
-
-```python
-# CrewAI: ~50 lines of Python, define every role, API key required
-researcher = Agent(role="PM", goal="...", backstory="...(write it yourself)...")
-task = Task(description="...", agent=researcher)
-crew = Crew(agents=[researcher], tasks=[task])
-crew.kickoff()
-```
-
-```yaml
-# Agency Orchestrator: 10 lines of YAML, 186 roles ready to go, no API key
-steps:
-  - id: analyze
-    role: "product/product-manager"   # expert prompt already written
-    task: "Analyze this PRD: {{prd_content}}"
-```
-
-| | CrewAI | LangGraph | AutoGen | **Agency Orchestrator** |
-|---|--------|-----------|---------|---------------------|
-| Language | Python | Python | Python | **YAML (zero code)** |
-| Roles | Write your own | Write your own | Write your own | **186 ready-to-use** |
-| API Key | Required | Required | Required | **6 providers need none** |
-| Dependencies | pip + LiteLLM + dozens | pip + LangChain | pip + AutoGen | **npm + 2 deps** |
-| Parallelism | Manager mode | Manual graph | Manual | **Auto DAG detection** |
-| Branching | None | Manual | Manual | **Condition expressions** |
-| Loops | None | Manual | Manual | **Declarative loop/exit** |
-| Resume | None | Checkpointers | None | **Built-in `--resume`** |
-| Price | Open-source + $25-99/mo | Open-source | Open-source | **Completely free** |
+| | ChatGPT / Claude | CrewAI / LangGraph | **Agency Orchestrator** |
+|---|--------|-----------|---------------------|
+| Roles | 1 generalist | Write your own | **179 expert roles** |
+| Usage | Chat | Write Python | **One sentence / YAML** |
+| API key | — | Required | **6 providers need none** |
+| Dependencies | — | pip + dozens of packages | **npm + 2 deps** |
+| Parallelism | — | Manual graph | **Auto DAG detection** |
+| Price | Subscription | Open-source + API fees | **Completely free** |
 
 ## Get Started in 3 Steps
 
-### Step 1: Try it in 5 seconds
+### Step 1: Install
 
 ```bash
-npx agency-orchestrator demo
+npm install -g agency-orchestrator
 ```
 
-4 AI roles collaborate on a story. No install, no config, no API key.
-
-### Step 2: Run a real workflow with your subscription
+### Step 2: One sentence, go
 
 ```bash
-npm install agency-orchestrator
-npx ao init                    # download 186 AI roles
+# Use your existing Claude subscription (no API key needed)
+ao compose "Analyze the feasibility of building an AI budgeting app" --run --provider claude-code
 
-# Use your existing Claude Max subscription (no API key!)
-npx ao run workflows/story-creation.yaml --input premise="A time travel story"
+# Or use DeepSeek ($2 lasts forever)
+export DEEPSEEK_API_KEY="your-key"
+ao compose "Analyze the feasibility of building an AI budgeting app" --run
 ```
 
-Just set `provider: "claude-code"` in your YAML. No Claude? Use `gemini-cli` (free with Google account), `copilot-cli`, or `codex-cli`.
-
-### Step 3: Use it inside your AI coding tool
+### Step 3: Use built-in templates
 
 ```bash
-./scripts/install.sh           # one-command install for your AI tools
+# One-person company all-hands — 9 AI departments collaborate on a business plan
+ao run workflows/一人公司全员大会.yaml --input idea="An AI resume builder for job seekers"
+
+# More examples
+ao compose "Compare Cursor, Windsurf, and Copilot — give me a recommendation" --run
+ao compose "Write a deep dive article on the AI Agent trend" --run
+ao compose "Plan an AI education startup with $15K budget" --run
 ```
 
-Then tell Cursor / Claude Code / Copilot:
+Also works inside Cursor / Claude Code — just say "run a workflow." Supports **14 AI coding tools** ([integration guides](./integrations/)).
+
+## Real Demos
+
+### One sentence → complete business plan
 
 ```
-Run workflows/story-creation.yaml with premise="A time travel story"
+$ ao compose "Analyze startup opportunities in short-form video" --run
+
+  Workflow: Short-Form Video Startup Opportunity Analysis
+  Steps: 6 | Concurrency: 2 | Model: deepseek-chat
+  Roles: 👔 CEO | 📊 Market Researcher | 🔍 User Researcher | 🧭 Product Manager | 📣 Marketing Lead | 💰 CFO
+──────────────────────────────────────────────────
+
+  ✅ 👔 CEO              12.7s   → Strategic direction & target user positioning
+  ✅ 📊 Market Researcher 45.2s   → 700M DAU data, competitive landscape analysis
+  ✅ 🔍 User Researcher   38.1s   → User personas, pain points, willingness to pay
+  ✅ 🧭 Product Manager   41.3s   → MVP feature list, content matrix, monetization paths
+  ✅ 📣 Marketing Lead    35.6s   → Cold start plan, ad strategy, user funnel
+  ✅ 💰 CFO              28.4s   → $200K startup, $550K first-year revenue, break-even analysis
+
+==================================================
+  Done: 6/6 steps | 233.0s | 65,191 tokens
+==================================================
 ```
 
-It auto-parses YAML → loads roles → executes in DAG order → saves results.
-
-**Works with 14 AI coding tools** ([integration guides](./integrations/)): Claude Code · GitHub Copilot · Cursor · Windsurf · Kiro · Trae · Aider · Gemini CLI · Codex CLI · OpenCode · Qwen Code · DeerFlow 2.0 · Antigravity · OpenClaw
-
-## Demo: 4 AI Roles Write a Complete Story in 2 Minutes
+### 4 AI roles write a complete story
 
 ```
 $ ao run workflows/story-creation.yaml -i "premise=A programmer discovers AI replies with things it shouldn't know"
@@ -110,24 +129,17 @@ $ ao run workflows/story-creation.yaml -i "premise=A programmer discovers AI rep
   Steps: 4 | Concurrency: 2 | Model: deepseek-chat
 ──────────────────────────────────────────────────
 
-  ── [1/4] story_structure (Narratologist) ──
-  Done | 14.9s | 1,919 tokens
-
-  ── [2/4] character_design (Psychologist) ──            ← parallel
-  Done | 65.5s | 4,016 tokens
-
-  ── [3/4] conflict_design (Narrative Designer) ──       ← parallel
-  Done | 65.5s | 3,607 tokens
-
-  ── [4/4] write_story (Content Creator) ──
-  Done | 33.9s | 5,330 tokens
+  ✅ Narratologist     14.9s   → Core conflict & three-act structure
+  ✅ Psychologist      65.5s   → Character psychological profiles     ← parallel
+  ✅ Narrative Designer 65.5s   → Conflict scene design               ← parallel
+  ✅ Content Creator   33.9s   → Complete suspense short story
 
 ==================================================
-  Completed: 4/4 steps | 114.3s | 14,872 tokens
+  Done: 4/4 steps | 114.3s | 14,872 tokens
 ==================================================
 ```
 
-Steps 2 and 3 run **in parallel** (auto-detected from DAG dependencies). Four specialized AI roles collaborate to produce a complete suspense short story.
+Steps 2 and 3 **run in parallel** (auto-detected from DAG dependencies).
 
 ## How It Works
 
@@ -136,7 +148,7 @@ name: "Product Requirements Review"
 agents_dir: "agency-agents-zh"
 
 llm:
-  provider: "deepseek"       # or: claude, openai, ollama
+  provider: "deepseek"          # No API key: claude-code / gemini-cli / copilot-cli / codex-cli / ollama
   model: "deepseek-chat"
 
 concurrency: 2
@@ -170,6 +182,7 @@ steps:
 ```
 
 The engine automatically:
+
 1. Parses YAML → builds a **DAG** (directed acyclic graph)
 2. Detects parallelism — `tech_review` and `design_review` run concurrently
 3. Passes outputs between steps via `{{variables}}`
@@ -183,7 +196,54 @@ analyze ──→ tech_review  ──→ summary
           (parallel)
 ```
 
-## Features
+## 9 LLM Providers — 6 Need No API Key
+
+**Already paying for one of these? You're ready to go:**
+
+| You have... | Provider config | Install CLI | Cost to you |
+|------------|----------------|-------------|-------------|
+| Claude Max/Pro ($20/mo) | `provider: "claude-code"` | `npm i -g @anthropic-ai/claude-code` | **$0 extra** |
+| Google Account | `provider: "gemini-cli"` | `npm i -g @google/gemini-cli` | **Free** (1000 req/day, Gemini 2.5 Pro) |
+| GitHub Copilot ($10/mo) | `provider: "copilot-cli"` | `npm i -g @github/copilot` | **$0 extra** |
+| ChatGPT Plus/Pro ($20/mo) | `provider: "codex-cli"` | `npm i -g @openai/codex` | **$0 extra** |
+| OpenClaw account | `provider: "openclaw-cli"` | `npm i -g openclaw` | **$0 extra** |
+| A computer | `provider: "ollama"` | [ollama.ai](https://ollama.ai) | **Free** (local models) |
+
+**Or use traditional API keys:**
+
+| Provider | Config | Env Variable |
+|----------|--------|-------------|
+| DeepSeek | `provider: "deepseek"` | `DEEPSEEK_API_KEY` |
+| Claude API | `provider: "claude"` | `ANTHROPIC_API_KEY` |
+| OpenAI | `provider: "openai"` | `OPENAI_API_KEY` |
+
+All API providers support custom `base_url` and `api_key`, compatible with any OpenAI-compatible API.
+
+## CLI Reference
+
+```bash
+ao demo                              # Zero-config multi-agent demo
+ao init                              # Download 179 AI roles
+ao init --workflow                    # Interactive workflow creator
+ao compose "description"             # AI-powered workflow generation
+ao compose "description" --run       # Generate AND execute in one command
+ao run <workflow.yaml> [options]      # Execute workflow
+ao validate <workflow.yaml>          # Validate without running
+ao plan <workflow.yaml>              # Show execution plan (DAG)
+ao explain <workflow.yaml>           # Explain execution plan in natural language
+ao roles                             # List all available roles
+ao serve                             # Start MCP Server (for Claude Code / Cursor)
+```
+
+| Option | Description |
+|--------|-------------|
+| `--input key=value` | Pass input variables |
+| `--input key=@file` | Read variable value from file |
+| `--output dir` | Output directory (default `ao-output/`) |
+| `--resume <dir\|last>` | Resume from previous run |
+| `--from <step-id>` | With `--resume`, restart from a specific step |
+| `--watch` | Real-time terminal progress display |
+| `--quiet` | Quiet mode |
 
 ### AI Workflow Composer
 
@@ -194,55 +254,12 @@ ao compose "PR code review covering security and performance"
 ```
 
 The AI will:
-1. Select matching roles from 186 available (e.g., Code Reviewer, Security Engineer, Performance Benchmarker)
+1. Select matching roles from 179 available (e.g., Code Reviewer, Security Engineer, Performance Benchmarker)
 2. Design the DAG (3-way parallel → summary)
 3. Generate complete YAML with variable passing and task descriptions
 4. Save to `workflows/` — ready to `ao run`
 
-Supports `--provider` and `--model` flags (default: DeepSeek).
-
-### Condition Branching
-
-```yaml
-- id: tech_path
-  role: "engineering/engineering-sre"
-  task: "Technical evaluation: {{requirements}}"
-  depends_on: [classify]
-  condition: "{{job_type}} contains technical"
-
-- id: biz_path
-  role: "marketing/marketing-social-media-strategist"
-  task: "Business evaluation: {{requirements}}"
-  depends_on: [classify]
-  condition: "{{job_type}} contains business"
-
-- id: summary
-  depends_on: [tech_path, biz_path]
-  depends_on_mode: "any_completed"  # proceeds when ANY upstream completes
-```
-
-Supported operators: `contains`, `equals`, `not_contains`, `not_equals`.
-
-### Loop Iteration
-
-```yaml
-- id: write_draft
-  role: "marketing/marketing-content-creator"
-  task: "Write article: {{topic}}"
-  output: draft
-
-- id: brand_review
-  role: "design/design-brand-guardian"
-  task: "Review brand compliance: {{draft}}"
-  output: review_result
-  depends_on: [write_draft]
-  loop:
-    back_to: write_draft
-    max_iterations: 3
-    exit_condition: "{{review_result}} contains approved"
-```
-
-When the exit condition is not met, execution loops back to `back_to`. The `{{_loop_iteration}}` variable tracks the current round.
+Add `--run` to generate and execute in one command. Supports `--provider` and `--model` flags (default: DeepSeek).
 
 ### Resume & Iterate
 
@@ -272,54 +289,6 @@ Each round creates a new timestamped output directory. All versions are preserve
 | Re-run from a step | `ao run workflow.yaml --resume last --from <step-id>` |
 | Re-run only failed steps | `ao run workflow.yaml --resume last` |
 | Resume specific version | `ao run workflow.yaml --resume ao-output/<dir>/ --from <step-id>` |
-
-## 9 LLM Providers — 6 Need No API Key
-
-**Already paying for one of these? You're ready to go:**
-
-| You have... | Provider config | Install CLI | Cost to you |
-|------------|----------------|-------------|-------------|
-| Claude Max/Pro ($20/mo) | `provider: "claude-code"` | `npm i -g @anthropic-ai/claude-code` | **$0 extra** |
-| Google Account | `provider: "gemini-cli"` | `npm i -g @google/gemini-cli` | **Free** (1000 req/day, Gemini 2.5 Pro) |
-| GitHub Copilot ($10/mo) | `provider: "copilot-cli"` | `npm i -g @github/copilot` | **$0 extra** |
-| ChatGPT Plus/Pro ($20/mo) | `provider: "codex-cli"` | `npm i -g @openai/codex` | **$0 extra** |
-| OpenClaw account | `provider: "openclaw-cli"` | `npm i -g openclaw` | **$0 extra** |
-| A computer | `provider: "ollama"` | [ollama.ai](https://ollama.ai) | **Free** (local models) |
-
-**Or use traditional API keys:**
-
-| Provider | Config | Env Variable |
-|----------|--------|-------------|
-| DeepSeek | `provider: "deepseek"` | `DEEPSEEK_API_KEY` |
-| Claude API | `provider: "claude"` | `ANTHROPIC_API_KEY` |
-| OpenAI | `provider: "openai"` | `OPENAI_API_KEY` |
-
-All API providers support custom `base_url` and `api_key`, compatible with any OpenAI-compatible API.
-
-## CLI Reference
-
-```bash
-ao demo                              # Zero-config multi-agent demo
-ao init                              # Download 186 AI roles
-ao init --workflow                    # Interactive workflow creator
-ao compose "description"             # AI-powered workflow generation
-ao run <workflow.yaml> [options]      # Execute workflow
-ao validate <workflow.yaml>           # Validate without running
-ao plan <workflow.yaml>               # Show execution plan (DAG)
-ao explain <workflow.yaml>            # Explain execution plan in natural language
-ao roles                             # List all available roles
-ao serve                             # Start MCP Server (for Claude Code / Cursor)
-```
-
-| Option | Description |
-|--------|-------------|
-| `--input key=value` | Pass input variables |
-| `--input key=@file` | Read variable value from file |
-| `--output dir` | Output directory (default `ao-output/`) |
-| `--resume <dir\|last>` | Resume from previous run |
-| `--from <step-id>` | With `--resume`, restart from a specific step |
-| `--watch` | Real-time terminal progress display |
-| `--quiet` | Quiet mode |
 
 ## MCP Server Mode
 
@@ -507,7 +476,7 @@ ao-output/product-review-2026-03-22/
 ## Ecosystem
 
 ```
-Your AI subscription ──→ agency-orchestrator ──→ 186 expert roles collaborate ──→ quality output
+Your AI subscription ──→ agency-orchestrator ──→ 179 expert roles collaborate ──→ quality output
                               │
              ┌────────────────┼────────────────┐
              ▼                ▼                ▼
@@ -518,7 +487,8 @@ Your AI subscription ──→ agency-orchestrator ──→ 186 expert roles co
 
 | Project | Description |
 |---------|-------------|
-| [agency-agents-zh](https://github.com/jnMetaCode/agency-agents-zh) | 186 AI role definitions — the role library for this engine |
+| [ai-coding-guide](https://github.com/jnMetaCode/ai-coding-guide) | AI coding tools field guide — 66 Claude Code tips + 9 tools best practices + copyable config templates |
+| [agency-agents-zh](https://github.com/jnMetaCode/agency-agents-zh) | 179 AI role definitions — the role library for this engine |
 | [superpowers-zh](https://github.com/jnMetaCode/superpowers-zh) | AI coding superpowers — 20 skills for Claude Code / Cursor |
 | [shellward](https://github.com/jnMetaCode/shellward) | AI agent security middleware — prompt injection detection, DLP, command safety |
 
@@ -528,7 +498,8 @@ Your AI subscription ──→ agency-orchestrator ──→ 186 expert roles co
 - [x] **v0.2** — Condition branching, loop iteration, human approval, Resume, 5 department-collab templates
 - [x] **v0.3** — 9 AI tool integrations, 20+ workflow templates, `ao explain`, `ao init --workflow`, `--watch` mode
 - [x] **v0.4** — MCP Server mode (`ao serve`), 14 AI tool integrations, one-command installer, 30 workflow templates, **9 LLM providers (6 need no API key: Claude Code / Gemini / Copilot / Codex / OpenClaw / Ollama)**
-- [ ] **v0.5** — Web UI, visual DAG editor, English role support, workflow marketplace
+- [x] **v0.5** — `ao compose --run` one-sentence-to-result, real-time streaming, smart retry (exponential backoff), per-step model override, agent identity
+- [ ] **v0.6** — Web UI, visual DAG editor, English role support, workflow marketplace
 
 ## Contributing
 
