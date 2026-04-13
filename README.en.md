@@ -11,6 +11,8 @@
 
 **One sentence → full plan · 179 expert AI roles · Zero-code YAML · 9 LLM providers · 6 need no API key**
 
+> **Note:** The built-in 179 roles and 30 workflow templates are currently in **Chinese**. `ao compose --run` works with English input (the LLM understands both languages), but role prompts and generated workflows will be in Chinese. English role library coming in v0.6.
+
 > If you find this useful, please **Star** it — helps others discover the project.
 
 <p align="center">
@@ -82,16 +84,16 @@ export DEEPSEEK_API_KEY="your-key"
 ao compose "Analyze the feasibility of building an AI budgeting app" --run
 ```
 
-### Step 3: Use built-in templates
+### Step 3: Use built-in templates or compose your own
 
 ```bash
-# One-person company all-hands — 9 AI departments collaborate on a business plan
-ao run workflows/一人公司全员大会.yaml --input idea="An AI resume builder for job seekers"
-
-# More examples
+# Compose generates a workflow from your description — works with English input
 ao compose "Compare Cursor, Windsurf, and Copilot — give me a recommendation" --run
-ao compose "Write a deep dive article on the AI Agent trend" --run
 ao compose "Plan an AI education startup with $15K budget" --run
+
+# Or run built-in templates (note: templates are in Chinese, output will be in Chinese)
+ao run workflows/story-creation.yaml --input premise="A programmer discovers AI knows things it shouldn't"
+ao run workflows/dev/pr-review.yaml --input code="your code here"
 ```
 
 Also works inside Cursor / Claude Code — just say "run a workflow." Supports **14 AI coding tools** ([integration guides](./integrations/)).
