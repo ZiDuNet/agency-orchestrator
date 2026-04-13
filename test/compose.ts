@@ -7,6 +7,7 @@ import {
   extractYamlFromResponse,
   formatCatalogForPrompt,
   generateFileName,
+  detectLang,
   type RoleSummary,
 } from '../src/cli/compose.js';
 
@@ -112,6 +113,45 @@ test('非 autoRun 模式 prompt 包含 inputs', () => {
   assert(!prompt.includes('直接运行模式'), '不应包含直接运行模式说明');
 });
 
+// ─── detectLang ───
+
+console.log('\n─── detectLang ───');
+
+test('纯中文识别为 zh', () => {
+  assert(detectLang('帮我做一个代码审查') === 'zh', '应识别为中文');
+});
+
+test('纯英文识别为 en', () => {
+  assert(detectLang('Help me build a code review pipeline') === 'en', '应识别为英文');
+});
+
+test('中英混合识别为 zh', () => {
+  assert(detectLang('帮我做一个 AI tool') === 'zh', '混合输入应优先中文');
+});
+
+// ─── English system prompt ───
+
+console.log('\n─── English system prompt ───');
+
+test('English prompt uses agency-agents', () => {
+  const prompt = buildComposeSystemPrompt('## test\n- role/path | name | desc', { lang: 'en' });
+  assert(prompt.includes('agents_dir: "agency-agents"'), '应使用 agency-agents');
+  assert(!prompt.includes('agents_dir: "agency-agents-zh"'), '不应使用 agency-agents-zh');
+  assert(prompt.includes('Parallel first'), '应包含英文设计原则');
+});
+
+test('English autoRun prompt has no inputs', () => {
+  const prompt = buildComposeSystemPrompt('## test\n- role/path | name | desc', { autoRun: true, lang: 'en' });
+  assert(prompt.includes('Direct Run Mode'), '应包含英文直接运行说明');
+  assert(prompt.includes('Self-contained'), '应包含英文自包含原则');
+});
+
+test('Chinese prompt still works (default)', () => {
+  const prompt = buildComposeSystemPrompt('## test\n- role/path | name | desc', { lang: 'zh' });
+  assert(prompt.includes('agents_dir: "agency-agents-zh"'), '应使用 agency-agents-zh');
+  assert(prompt.includes('并行优先'), '应包含中文设计原则');
+});
+
 // ─── buildComposeUserPrompt ───
 
 console.log('\n─── buildComposeUserPrompt ───');
@@ -119,6 +159,12 @@ console.log('\n─── buildComposeUserPrompt ───');
 test('user prompt 包含描述', () => {
   const prompt = buildComposeUserPrompt('做一个代码审查流程');
   assert(prompt.includes('做一个代码审查流程'), '应包含用户描述');
+});
+
+test('English user prompt', () => {
+  const prompt = buildComposeUserPrompt('Build a code review pipeline', 'en');
+  assert(prompt.includes('Design a multi-agent collaboration workflow'), '应包含英文提示');
+  assert(prompt.includes('Build a code review pipeline'), '应包含用户描述');
 });
 
 // ─── generateFileName ───

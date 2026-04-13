@@ -202,7 +202,7 @@ async function handleExplain(): Promise<void> {
 async function handleCompose(): Promise<void> {
   const autoRun = args.includes('--run');
   // 描述是第一个非 flag 的参数（跳过 compose 本身和 --xxx 的值）
-  const flagsWithValue = new Set(['--name', '--provider', '--model', '--agents-dir']);
+  const flagsWithValue = new Set(['--name', '--provider', '--model', '--agents-dir', '--lang']);
   let description: string | undefined;
   for (let i = 1; i < args.length; i++) {
     if (args[i] === '--run') continue;
@@ -226,6 +226,7 @@ async function handleCompose(): Promise<void> {
     console.error('  --name <filename>   自定义输出文件名 (不含 .yaml 后缀)');
     console.error('  --provider <name>   LLM 提供商 (默认 deepseek)');
     console.error('  --model <name>      模型名 (默认 deepseek-chat)');
+    console.error('  --lang <zh|en>      语言 (默认自动检测 / auto-detect)');
     process.exit(1);
   }
 
