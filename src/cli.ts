@@ -237,7 +237,10 @@ async function handleCompose(): Promise<void> {
     provider === 'claude' ? 'claude-sonnet-4-20250514' :
     'gpt-4o'
   );
-  const agentsDir = getArgValue('--agents-dir') || resolveAgentsDir();
+  // 自动检测语言：英文输入 → 优先英文角色库
+  const { detectLang } = await import('./cli/compose.js');
+  const composeLang = getArgValue('--lang') as 'zh' | 'en' | undefined ?? detectLang(description);
+  const agentsDir = getArgValue('--agents-dir') || resolveAgentsDir(composeLang);
   const outputName = getArgValue('--name');
 
   try {
@@ -248,6 +251,7 @@ async function handleCompose(): Promise<void> {
       llmConfig: { provider, model },
       outputName,
       autoRun,
+      lang: composeLang,
     });
 
     console.log(`\n  ✅ 工作流已生成: ${relativePath}\n`);
@@ -341,10 +345,15 @@ async function handleInit(): Promise<void> {
     return;
   }
 
-  const targetDir = resolve('agency-agents-zh');
+  const lang = getArgValue('--lang') === 'en' ? 'en' : 'zh';
+  const pkgName = lang === 'en' ? 'agency-agents' : 'agency-agents-zh';
+  const gitRepo = lang === 'en'
+    ? 'https://github.com/msitarzewski/agency-agents.git'
+    : 'https://github.com/jnMetaCode/agency-agents-zh.git';
+  const targetDir = resolve(pkgName);
 
   if (existsSync(targetDir)) {
-    console.log(`  agency-agents-zh 已存在，跳过下载`);
+    console.log(`  ${pkgName} 已存在，跳过下载`);
     // 尝试更新
     try {
       execSync('git pull', { cwd: targetDir, stdio: 'pipe' });
@@ -353,18 +362,18 @@ async function handleInit(): Promise<void> {
       console.log('  (更新失败，使用现有版本)');
     }
   } else {
-    console.log('  正在下载 agency-agents-zh (186 个 AI 角色定义)...\n');
+    console.log(`  正在下载 ${pkgName} ...`);
     let downloaded = false;
 
     // 优先用 npm（国内镜像快）
     try {
-      execSync('npm pack agency-agents-zh --pack-destination .', { stdio: 'pipe' });
+      execSync(`npm pack ${pkgName} --pack-destination .`, { stdio: 'pipe' });
       const { readdirSync } = await import('node:fs');
-      const tgz = readdirSync('.').find(f => f.startsWith('agency-agents-zh-') && f.endsWith('.tgz'));
+      const tgz = readdirSync('.').find(f => f.startsWith(`${pkgName}-`) && f.endsWith('.tgz'));
       if (tgz) {
         const { mkdirSync } = await import('node:fs');
-        mkdirSync('agency-agents-zh', { recursive: true });
-        execSync(`tar xzf ${tgz} --strip-components=1 -C agency-agents-zh`, { stdio: 'pipe' });
+        mkdirSync(pkgName, { recursive: true });
+        execSync(`tar xzf ${tgz} --strip-components=1 -C ${pkgName}`, { stdio: 'pipe' });
         const { unlinkSync } = await import('node:fs');
         unlinkSync(tgz);
         downloaded = true;
@@ -378,10 +387,7 @@ async function handleInit(): Promise<void> {
     if (!downloaded) {
       try {
         console.log('  npm 下载失败，尝试 git clone...\n');
-        execSync(
-          'git clone --depth 1 https://github.com/jnMetaCode/agency-agents-zh.git',
-          { stdio: 'inherit' }
-        );
+        execSync(`git clone --depth 1 ${gitRepo}`, { stdio: 'inherit' });
         console.log('\n  下载完成!');
         downloaded = true;
       } catch {
@@ -391,8 +397,8 @@ async function handleInit(): Promise<void> {
 
     if (!downloaded) {
       console.error('\n  下载失败，请手动安装:');
-      console.error('  npm pack agency-agents-zh && tar xzf agency-agents-zh-*.tgz && mv package agency-agents-zh');
-      console.error('  或: git clone https://github.com/jnMetaCode/agency-agents-zh.git');
+      console.error(`  npm pack ${pkgName} && tar xzf ${pkgName}-*.tgz && mv package ${pkgName}`);
+      console.error(`  或: git clone ${gitRepo}`);
       process.exit(1);
     }
   }
@@ -479,21 +485,34 @@ function parseInputArgs(): Record<string, string> {
 
 /**
  * 自动查找 agents 目录，按优先级：
- * 1. ./agency-agents-zh (ao init 下载的)
- * 2. ../agency-agents-zh (同级目录)
- * 3. ./agents (自定义)
+ * 1. ./agency-agents-zh (中文角色，ao init 下载的)
+ * 2. ./agency-agents (英文角色，ao init --lang en 下载的)
+ * 3. ../agency-agents-zh 或 ../agency-agents (同级目录)
+ * 4. ./agents (自定义)
+ *
+ * @param preferLang 优先语言，影响搜索顺序
  */
-function resolveAgentsDir(): string {
-  const candidates = [
+function resolveAgentsDir(preferLang?: 'zh' | 'en'): string {
+  const zhFirst = [
     './agency-agents-zh',
+    './agency-agents',
+    '../agency-agents-zh',
+    '../agency-agents',
+    './agents',
+  ];
+  const enFirst = [
+    './agency-agents',
+    './agency-agents-zh',
+    '../agency-agents',
     '../agency-agents-zh',
     './agents',
   ];
+  const candidates = preferLang === 'en' ? enFirst : zhFirst;
   for (const dir of candidates) {
     const full = resolve(dir);
     if (existsSync(full)) return dir;
   }
-  return './agency-agents-zh';
+  return preferLang === 'en' ? './agency-agents' : './agency-agents-zh';
 }
 
 function getArgValue(flag: string): string | undefined {
@@ -520,14 +539,15 @@ function printHelp(): void {
 
   Quick Start:
     ao demo                           零配置体验多智能体协作
-    ao init                           下载 186 个 AI 角色定义
+    ao init                           下载 AI 角色定义（中文）
+    ao init --lang en                 Download English AI roles
     ao roles                          查看所有可用角色
     ao plan <workflow.yaml>           查看执行计划 (DAG)
     ao run <workflow.yaml> [options]   执行工作流
 
   Commands:
     demo                              零配置体验多智能体协作（mock + 真实 AI）
-    init                              下载/更新 agency-agents-zh
+    init                              下载/更新角色库 (--lang en 下载英文版)
     init --workflow                    交互式创建新工作流
     compose "描述"                     AI 智能编排工作流（一句话生成 YAML）
     compose "描述" --run               生成并立即运行（一句话出结果）
@@ -562,7 +582,8 @@ function printHelp(): void {
     ao run workflow.yaml --resume last --from summary     # 从 summary 步骤重新执行
     ao run workflow.yaml --resume ao-output/xxx/         # 指定具体输出目录
 
-  Agents: https://github.com/jnMetaCode/agency-agents-zh
+  Agents (中文): https://github.com/jnMetaCode/agency-agents-zh
+  Agents (English): https://github.com/msitarzewski/agency-agents
   `);
 }
 

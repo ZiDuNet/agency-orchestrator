@@ -25,10 +25,14 @@ function findAgentsDir(hint?: string): string {
   if (hint && existsSync(resolve(hint))) return resolve(hint);
   const candidates = [
     resolve('agency-agents-zh'),
+    resolve('agency-agents'),
     resolve('../agency-agents-zh'),
+    resolve('../agency-agents'),
     resolve('agents'),
     resolve('node_modules/agency-agents-zh'),
+    resolve('node_modules/agency-agents'),
     resolve(dirname(new URL(import.meta.url).pathname), '../../node_modules/agency-agents-zh'),
+    resolve(dirname(new URL(import.meta.url).pathname), '../../node_modules/agency-agents'),
   ];
   for (const dir of candidates) {
     if (existsSync(dir)) return dir;

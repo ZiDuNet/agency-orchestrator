@@ -1,7 +1,8 @@
 /**
  * ao compose — AI 智能编排工作流
  *
- * 用户用一句话描述需求，AI 从 186 个角色中选角色、设计 DAG、生成完整 workflow YAML。
+ * 用户用一句话描述需求，AI 从角色库中选角色、设计 DAG、生成完整 workflow YAML。
+ * 支持中文（agency-agents-zh）和英文（agency-agents）角色库。
  */
 import { listAgents } from '../agents/loader.js';
 import { existsSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -57,11 +58,117 @@ export function formatCatalogForPrompt(roles: RoleSummary[]): string {
 }
 
 /**
+ * 检测用户输入是否为英文（不包含中文字符）
+ */
+export function detectLang(text: string): 'zh' | 'en' {
+  return /[\u4e00-\u9fff]/.test(text) ? 'zh' : 'en';
+}
+
+/**
  * 构建发给 LLM 的 system prompt
  * @param catalog 角色目录文本
  * @param options.autoRun 如果 true，生成的 YAML 不需要 inputs，用户描述直接嵌入 task
+ * @param options.lang 语言：'zh' 中文提示词 + agency-agents-zh，'en' 英文提示词 + agency-agents
  */
-export function buildComposeSystemPrompt(catalog: string, options?: { autoRun?: boolean; provider?: string; model?: string }): string {
+export function buildComposeSystemPrompt(catalog: string, options?: { autoRun?: boolean; provider?: string; model?: string; lang?: 'zh' | 'en' }): string {
+  const lang = options?.lang ?? 'zh';
+  return lang === 'en'
+    ? buildComposeSystemPromptEn(catalog, options)
+    : buildComposeSystemPromptZh(catalog, options);
+}
+
+function buildComposeSystemPromptEn(catalog: string, options?: { autoRun?: boolean; provider?: string; model?: string }): string {
+  const autoRun = options?.autoRun ?? false;
+  const provider = options?.provider || 'deepseek';
+  const model = options?.model;
+
+  const inputsSection = autoRun
+    ? `
+## Important: Direct Run Mode
+
+This workflow will be executed immediately after generation, so:
+- **Do NOT** generate an inputs section
+- Embed all specific information from the user's description directly into each step's task
+- Ensure the workflow can run without any external inputs`
+    : `
+inputs:
+  - name: variable_name
+    description: "Variable description"
+    required: true`;
+
+  const inputsYamlExample = autoRun ? '' : `
+inputs:
+  - name: variable_name
+    description: "Variable description"
+    required: true
+`;
+
+  const inputsDesignPrinciple = autoRun
+    ? '- **Self-contained**: All information goes directly into tasks. Do NOT use inputs. The workflow must run directly'
+    : '- **Reasonable inputs**: Extract key variables from the user\'s requirements as inputs';
+
+  return `You are an AI workflow orchestration expert. The user will describe a workflow in one sentence. You need to:
+
+1. Select the most suitable roles from the role catalog below (typically 2-6)
+2. Design proper DAG dependencies (which steps can run in parallel, which must be serial)
+3. Write detailed task descriptions for each step
+${autoRun ? '4. Embed all specific information from the user\'s description directly into tasks, do NOT generate inputs' : '4. Design reasonable input variables'}
+5. Generate a complete workflow YAML
+${autoRun ? inputsSection : ''}
+## Output Format
+
+Output a complete YAML code block in this format:
+
+\`\`\`yaml
+name: "Workflow Name"
+description: "One-line description"
+
+agents_dir: "agency-agents"
+
+llm:
+  provider: ${provider}
+  ${model ? `model: ${model}` : ''}
+  max_tokens: 4096
+
+concurrency: 2
+${inputsYamlExample}
+steps:
+  - id: step_id
+    role: "category/role-name"
+    name: "Easy-to-understand role name (e.g., CEO, Product Manager, Tech Lead)"
+    emoji: "👔"
+    task: |
+      Detailed task description...
+${autoRun ? '      Include specific information from the user\'s description' : '      Use {{variable_name}} to reference input variables'}
+      Use {{previous_output}} to reference upstream step outputs
+    output: output_variable_name
+    depends_on: [upstream_step_id]  # Only add when there's a dependency
+\`\`\`
+
+## Design Principles
+
+- **Parallel first**: Steps without data dependencies should run in parallel (no depends_on)
+- **Variable chaining**: Upstream step output variable names must match downstream {{variable}} references
+- **Role matching**: Select the most specialized role for each task — don't use one role for everything
+- **Role naming**: Each step must have a name (approachable job title like "CEO", "Product Manager", "Tech Lead") and emoji, so anyone can instantly see who's speaking
+- **Detailed tasks**: Task descriptions should be specific — tell the role what to do and what format to output
+${inputsDesignPrinciple}
+- **Final deliverable**: The last step must output the final deliverable the user wants (e.g., complete article, complete report), not review comments or suggestions. If there's a review step, it should output the revised final version, not a "list of suggestions"
+
+## Available Role Catalog
+
+${catalog}
+
+## Rules
+
+- The role value must strictly use paths from the role catalog (e.g., "engineering/engineering-code-reviewer") — do NOT make up role paths
+- Only output the YAML code block, nothing else
+- Set concurrency to the maximum number of parallel steps
+- **Important: Split large tasks**. When writing long articles, don't let one step generate more than 800 words. Split by sections into multiple parallel steps (e.g., write_ch1, write_ch2, write_ch3), then use a merge step to rewrite into a coherent complete article
+- Limit word count in each writing step's task (e.g., "under 500 words") to avoid overly long single-step generation times`;
+}
+
+function buildComposeSystemPromptZh(catalog: string, options?: { autoRun?: boolean; provider?: string; model?: string }): string {
   const autoRun = options?.autoRun ?? false;
   const provider = options?.provider || 'deepseek';
   const model = options?.model;
@@ -155,7 +262,12 @@ ${catalog}
 /**
  * 构建 user prompt
  */
-export function buildComposeUserPrompt(description: string): string {
+export function buildComposeUserPrompt(description: string, lang?: 'zh' | 'en'): string {
+  if (lang === 'en') {
+    return `Design a multi-agent collaboration workflow for the following requirement:
+
+${description}`;
+  }
   return `请为以下需求设计一个多智能体协作工作流：
 
 ${description}`;
@@ -212,8 +324,11 @@ export async function composeWorkflow(options: {
   outputName?: string;
   /** 直接运行模式：生成的 YAML 不需要 inputs */
   autoRun?: boolean;
+  /** 语言：自动检测或指定 */
+  lang?: 'zh' | 'en';
 }): Promise<{ yaml: string; savedPath: string; relativePath: string; warnings: string[] }> {
   const { description, agentsDir, llmConfig } = options;
+  const lang = options.lang ?? detectLang(description);
 
   // 1. 构建角色目录
   const roles = buildRoleCatalog(agentsDir);
@@ -227,8 +342,9 @@ export async function composeWorkflow(options: {
     autoRun: options.autoRun,
     provider: options.llmConfig.provider,
     model: options.llmConfig.model,
+    lang,
   });
-  const userPrompt = buildComposeUserPrompt(description);
+  const userPrompt = buildComposeUserPrompt(description, lang);
 
   // 3. 调用 LLM
   console.log(`  正在用 AI 编排工作流...（${roles.length} 个角色可选）\n`);
