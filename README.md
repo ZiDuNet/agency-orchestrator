@@ -11,6 +11,8 @@
 
 **一句话出结果 · 211 个专业 AI 角色 · YAML 零代码 · 10 种大模型 · 7 种免 API key**
 
+> 📖 [完整上手教程](https://mp.weixin.qq.com/s/XcGbkMb6TM6NLQiL7ICwbw) — 从安装到实战，10 分钟上手
+
 > 觉得有用？请点个 **Star** — 帮助更多人发现这个项目。
 
 <p align="center">

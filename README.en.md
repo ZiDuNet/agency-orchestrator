@@ -13,6 +13,8 @@
 
 > **Note:** `ao compose --run` auto-detects your language. For English input, it uses [agency-agents](https://github.com/msitarzewski/agency-agents) (170+ English roles). Use `ao init --lang en` to download the English role library. The 32 built-in workflow templates are currently in Chinese — English templates coming in v0.6.
 
+> 📖 [Full Tutorial](https://dev.to/jnmetacode/agency-orchestrator-one-sentence-five-ai-agents-a-complete-plan-in-3-minutes-1ij6) — from install to real-world use in 10 minutes
+
 > If you find this useful, please **Star** it — helps others discover the project.
 
 <p align="center">
