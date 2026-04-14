@@ -138,7 +138,7 @@ name: "产品需求评审"
 agents_dir: "agency-agents-zh"
 
 llm:
-  provider: "deepseek"          # 免 API key: claude-code / gemini-cli / copilot-cli / codex-cli / ollama
+  provider: "deepseek"          # 免 API key: claude-code / gemini-cli / copilot-cli / codex-cli / hermes-cli / ollama
   model: "deepseek-chat"
 
 concurrency: 2
@@ -197,7 +197,7 @@ analyze ──→ tech_review  ──→ summary
 | GitHub Copilot（$10/月） | `provider: "copilot-cli"` | `npm i -g @github/copilot` | **不花钱** |
 | ChatGPT Plus/Pro（$20/月） | `provider: "codex-cli"` | `npm i -g @openai/codex` | **不花钱** |
 | OpenClaw 账号 | `provider: "openclaw-cli"` | `npm i -g openclaw` | **不花钱** |
-| Hermes Agent | `provider: "hermes-cli"` | [安装指南](https://github.com/NousResearch/hermes-agent) | **免费** |
+| Hermes Agent（🔥 NousResearch 热门开源） | `provider: "hermes-cli"` | [安装指南](https://github.com/NousResearch/hermes-agent) | **免费** |
 | 一台电脑 | `provider: "ollama"` | [ollama.ai](https://ollama.ai) | **免费**（本地模型） |
 
 **也支持传统 API key：**

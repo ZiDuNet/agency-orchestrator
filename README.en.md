@@ -139,7 +139,7 @@ name: "Product Requirements Review"
 agents_dir: "agency-agents"      # or "agency-agents-zh" for Chinese roles
 
 llm:
-  provider: "deepseek"          # No API key: claude-code / gemini-cli / copilot-cli / codex-cli / ollama
+  provider: "deepseek"          # No API key: claude-code / gemini-cli / copilot-cli / codex-cli / hermes-cli / ollama
   model: "deepseek-chat"
 
 concurrency: 2
@@ -198,7 +198,7 @@ analyze ──→ tech_review  ──→ summary
 | GitHub Copilot ($10/mo) | `provider: "copilot-cli"` | `npm i -g @github/copilot` | **$0 extra** |
 | ChatGPT Plus/Pro ($20/mo) | `provider: "codex-cli"` | `npm i -g @openai/codex` | **$0 extra** |
 | OpenClaw account | `provider: "openclaw-cli"` | `npm i -g openclaw` | **$0 extra** |
-| Hermes Agent | `provider: "hermes-cli"` | [Install guide](https://github.com/NousResearch/hermes-agent) | **Free** |
+| Hermes Agent (🔥 NousResearch popular open-source) | `provider: "hermes-cli"` | [Install guide](https://github.com/NousResearch/hermes-agent) | **Free** |
 | A computer | `provider: "ollama"` | [ollama.ai](https://ollama.ai) | **Free** (local models) |
 
 **Or use traditional API keys:**
@@ -488,7 +488,7 @@ Your AI subscription ──→ agency-orchestrator ──→ 380+ expert roles c
 - [x] **v0.1** — YAML workflows, DAG engine, 4 LLM connectors, CLI, streaming output
 - [x] **v0.2** — Condition branching, loop iteration, human approval, Resume, 5 department-collab templates
 - [x] **v0.3** — 9 AI tool integrations, 20+ workflow templates, `ao explain`, `ao init --workflow`, `--watch` mode
-- [x] **v0.4** — MCP Server mode (`ao serve`), 14 AI tool integrations, one-command installer, 32 workflow templates, **10 LLM providers (7 need no API key: Claude Code / Gemini / Copilot / Codex / OpenClaw / Ollama)**
+- [x] **v0.4** — MCP Server mode (`ao serve`), 14 AI tool integrations, one-command installer, 32 workflow templates, **10 LLM providers (7 need no API key: Claude Code / Gemini / Copilot / Codex / OpenClaw / Hermes / Ollama)**
 - [x] **v0.5** — `ao compose --run` one-sentence-to-result, real-time streaming, smart retry (exponential backoff), per-step model override, agent identity
 - [ ] **v0.6** — Web UI, visual DAG editor, English workflow templates, workflow marketplace
 
