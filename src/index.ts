@@ -84,10 +84,23 @@ export async function run(
   const inputMap = new Map(Object.entries(inputs));
 
   // 检查必填输入 + 注入默认值
-  for (const def of workflow.inputs || []) {
-    if (def.required && !inputMap.has(def.name)) {
-      throw new Error(`缺少必填输入: ${def.name}`);
+  const missingInputs = (workflow.inputs || []).filter(
+    def => def.required && !inputMap.has(def.name)
+  );
+  if (missingInputs.length > 0) {
+    const lines = [
+      `缺少必填输入: ${missingInputs.map(i => i.name).join(', ')}`,
+      '',
+      '请通过 -i 传入（支持多次，支持从文件读取）:',
+    ];
+    for (const def of missingInputs) {
+      const desc = def.description ? `  # ${def.description}` : '';
+      lines.push(`  -i ${def.name}="..."${desc}`);
+      lines.push(`  -i ${def.name}=@path/to/file${desc}`);
     }
+    throw new Error(lines.join('\n'));
+  }
+  for (const def of workflow.inputs || []) {
     // 可选输入未提供时使用默认值
     if (!inputMap.has(def.name) && def.default !== undefined) {
       inputMap.set(def.name, def.default);
@@ -250,19 +263,38 @@ function resolveAgentsDir(agentsDir: string, workflowPath: string): string {
   const relToWorkflow = resolve(dirname(workflowPath), agentsDir);
   if (existsSync(relToWorkflow)) return relToWorkflow;
 
-  // 3. 常见位置（包括 npm 依赖自带的，支持中英文角色包）
-  const candidates = [
-    resolve('agency-agents-zh'),
-    resolve('agency-agents'),
-    resolve('../agency-agents-zh'),
-    resolve('../agency-agents'),
-    resolve('node_modules/agency-agents-zh'),
-    resolve('node_modules/agency-agents'),
-    resolve(dirname(new URL(import.meta.url).pathname), '../../node_modules/agency-agents-zh'),
-    resolve(dirname(new URL(import.meta.url).pathname), '../../node_modules/agency-agents'),
+  // 3. 按用户指定的 agents_dir 名字，在常见位置查找同名目录
+  // （尊重用户意图：指定 "agency-agents" 不会 fallback 到 "agency-agents-zh"）
+  const baseName = agentsDir.replace(/[\/\\]+$/, '').split(/[\/\\]/).pop() || agentsDir;
+  const scriptDir = dirname(new URL(import.meta.url).pathname);
+  const sameNameCandidates = [
+    resolve(baseName),
+    resolve('..', baseName),
+    resolve('node_modules', baseName),
+    resolve(scriptDir, '../../node_modules', baseName),
   ];
-  for (const dir of candidates) {
+  for (const dir of sameNameCandidates) {
     if (existsSync(dir)) return dir;
+  }
+
+  // 4. 找不到用户指定的目录，再尝试另一语言版本作为兜底（但会在 stderr 警告）
+  const fallbackName = baseName === 'agency-agents' ? 'agency-agents-zh'
+                     : baseName === 'agency-agents-zh' ? 'agency-agents'
+                     : null;
+  if (fallbackName) {
+    const fallbackCandidates = [
+      resolve(fallbackName),
+      resolve('..', fallbackName),
+      resolve('node_modules', fallbackName),
+      resolve(scriptDir, '../../node_modules', fallbackName),
+    ];
+    for (const dir of fallbackCandidates) {
+      if (existsSync(dir)) {
+        console.warn(`\n⚠️  未找到 "${baseName}"，回退到 "${fallbackName}"。角色名可能显示为另一种语言。`);
+        console.warn(`   要使用 ${baseName}，请运行: ao init${baseName === 'agency-agents' ? ' --lang en' : ''}\n`);
+        return dir;
+      }
+    }
   }
 
   // 找不到就返回原值，让后续报错

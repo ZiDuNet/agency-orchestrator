@@ -11,7 +11,7 @@
 
 **One sentence → full plan · 211 expert AI roles · Zero-code YAML · 10 LLM providers · 7 need no API key**
 
-> **Note:** `ao compose --run` auto-detects your language. For English input, it uses [agency-agents](https://github.com/msitarzewski/agency-agents) (170+ English roles). Use `ao init --lang en` to download the English role library. The 32 built-in workflow templates are currently in Chinese — English templates coming in v0.6.
+> **Note:** `ao compose --run` auto-detects your language. For English input, it uses [agency-agents](https://github.com/msitarzewski/agency-agents) (170+ English roles). Use `ao init --lang en` to download the English role library. **6 English workflow templates** are ready in `workflows/en/` — more coming in v0.6.
 
 > 📖 [Full Tutorial](https://dev.to/jnmetacode/agency-orchestrator-one-sentence-five-ai-agents-a-complete-plan-in-3-minutes-1ij6) — from install to real-world use in 10 minutes
 
@@ -102,10 +102,10 @@ ao compose "Analyze the feasibility of building an AI budgeting app" --run
 ### Step 3: Use built-in templates or integrate with AI coding tools
 
 ```bash
-# 32 built-in workflow templates
-ao run workflows/一人公司全员大会.yaml --input idea="AI-powered resume builder for job seekers"
-ao run workflows/dev/pr-review.yaml --input code=@src/main.ts
-ao run workflows/story-creation.yaml -i premise="A programmer discovers AI knows things it shouldn't"
+# 6 English workflow templates in workflows/en/
+ao run workflows/en/solo-founder-plan.yaml -i idea="AI-powered resume builder for job seekers"
+ao run workflows/en/pr-review.yaml -i pr_diff=@mypr.diff -i pr_description="Add auth middleware"
+ao run workflows/en/business-plan.yaml -i idea="B2B SaaS for remote-team project tracking"
 ```
 
 Also works inside Cursor / Claude Code — just say "run a workflow." Supports **14 AI coding tools** ([integration guides](./integrations/)).
@@ -198,9 +198,9 @@ analyze ──→ tech_review  ──→ summary
 | Claude Max/Pro ($20/mo) | `provider: "claude-code"` | `npm i -g @anthropic-ai/claude-code` | **$0 extra** |
 | Google Account | `provider: "gemini-cli"` | `npm i -g @google/gemini-cli` | **Free** (1000 req/day, Gemini 2.5 Pro) |
 | GitHub Copilot ($10/mo) | `provider: "copilot-cli"` | `npm i -g @github/copilot` | **$0 extra** |
-| ChatGPT Plus/Pro ($20/mo) | `provider: "codex-cli"` | `npm i -g @openai/codex` | **$0 extra** |
+| ChatGPT Plus ($20/mo) | `provider: "codex-cli"` | `npm i -g @openai/codex` | **$0 extra** |
 | OpenClaw account | `provider: "openclaw-cli"` | `npm i -g openclaw` | **$0 extra** |
-| Hermes Agent (🔥 NousResearch popular open-source) | `provider: "hermes-cli"` | [Install guide](https://github.com/NousResearch/hermes-agent) | **Free** |
+| Hermes Agent (NousResearch open-source 🔥) | `provider: "hermes-cli"` | [Install guide](https://github.com/NousResearch/hermes-agent) | **Free** |
 | A computer | `provider: "ollama"` | [ollama.ai](https://ollama.ai) | **Free** (local models) |
 
 **Or use traditional API keys:**
@@ -262,13 +262,13 @@ Not happy with a step? No need to start over. `--resume` reloads previous output
 
 ```bash
 # Round 1: Normal run
-ao run workflows/一人公司全员大会.yaml -i idea="AI-powered resume builder for job seekers"
+ao run workflows/en/solo-founder-plan.yaml -i idea="AI-powered resume builder for job seekers"
 
 # Marketing plan needs work? Re-run from that step
-ao run workflows/一人公司全员大会.yaml --resume last --from marketing_plan
+ao run workflows/en/solo-founder-plan.yaml --resume last --from marketing_plan
 
-# Only redo the final summary
-ao run workflows/一人公司全员大会.yaml --resume last --from launch_decision
+# Only redo the final decision
+ao run workflows/en/solo-founder-plan.yaml --resume last --from ceo_decision
 ```
 
 Each round saves to a new timestamped directory in `ao-output/`. All versions are preserved.
@@ -376,7 +376,7 @@ Works with **14 AI coding tools** — install with one command:
 
 | Tool | Config Location | Install Command | Docs |
 |------|----------------|----------------|------|
-| **Claude Code** | Skill mode | `npx superpowers-zh` | [Guide](./integrations/claude-code/) |
+| **Claude Code** | Skill mode | `--tool claude-code` | [Guide](./integrations/claude-code/) |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | `--tool copilot` | [Guide](./integrations/copilot/) |
 | **Cursor** | `.cursor/rules/` | `--tool cursor` | [Guide](./integrations/cursor/) |
 | **Windsurf** | `.windsurfrules` | `--tool windsurf` | [Guide](./integrations/windsurf/) |
@@ -391,7 +391,28 @@ Works with **14 AI coding tools** — install with one command:
 | **Antigravity** | `AGENTS.md` | `--tool antigravity` | [Guide](./integrations/antigravity/) |
 | **OpenClaw** | Skill mode | `--tool openclaw` | [Guide](./integrations/openclaw/) |
 
-## Workflow Templates (32)
+## English Workflow Templates (6)
+
+Ready to run with `agency-agents` English roles:
+
+| Template | Roles | Description |
+|----------|-------|-------------|
+| `en/solo-founder-plan.yaml` | CEO, Market/User Researcher, Tech Lead, Brand, PM, Marketing, CFO | **Solo founder all-hands** — one sentence → 8 departments plan → CEO decision |
+| `en/pr-review.yaml` | Code Reviewer, Security Engineer, Performance Benchmarker | PR review (3-way parallel → merge verdict) |
+| `en/product-review.yaml` | PM, Architect, UX Researcher | PRD review (tech + design parallel → synthesis) |
+| `en/business-plan.yaml` | Trend Researcher, FP&A Analyst, PM, Executive Summary | Business plan (market → parallel forecast + roadmap → plan) |
+| `en/content-pipeline.yaml` | Social Strategist, Content Creator, Growth Hacker | Content pipeline (research → draft → brand review → finalize) |
+| `en/competitor-analysis.yaml` | Trend Researcher, Analytics Reporter, SEO Specialist, Executive Summary | Competitor report (research → data + SEO parallel → summary) |
+
+```bash
+ao run workflows/en/solo-founder-plan.yaml -i idea="Your idea here"
+```
+
+---
+
+## Chinese Workflow Templates (32)
+
+> Available via `ao init` (Chinese mode). Use `agency-agents-zh` roles.
 
 ### Dev Workflows (7)
 
@@ -480,9 +501,9 @@ Your AI subscription ──→ agency-orchestrator ──→ 380+ expert roles c
 | Project | Description |
 |---------|-------------|
 | [agency-agents](https://github.com/msitarzewski/agency-agents) | 170+ English AI role definitions by [@msitarzewski](https://github.com/msitarzewski) — the English role library for this engine |
-| [agency-agents-zh](https://github.com/jnMetaCode/agency-agents-zh) | 211 Chinese AI role definitions — the Chinese role library for this engine |
-| [ai-coding-guide](https://github.com/jnMetaCode/ai-coding-guide) | AI coding tools field guide — 66 Claude Code tips + 9 tools best practices + copyable config templates |
-| [superpowers-zh](https://github.com/jnMetaCode/superpowers-zh) | AI coding superpowers — 20 skills for Claude Code / Cursor |
+| [agency-agents-zh](https://github.com/jnMetaCode/agency-agents-zh) | 211 Chinese AI role definitions (Chinese) — the Chinese role library for this engine |
+| [ai-coding-guide](https://github.com/jnMetaCode/ai-coding-guide) | AI coding tools field guide (Chinese) — 66 Claude Code tips + 9 tools best practices |
+| [superpowers-zh](https://github.com/jnMetaCode/superpowers-zh) | AI coding superpowers (Chinese) — 20 skills for Claude Code / Cursor |
 | [shellward](https://github.com/jnMetaCode/shellward) | AI agent security middleware — prompt injection detection, DLP, command safety |
 
 ## Roadmap
