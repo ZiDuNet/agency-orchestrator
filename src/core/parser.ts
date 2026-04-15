@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs';
 import yaml from 'js-yaml';
 import type { WorkflowDefinition, StepDefinition } from '../types.js';
+import { t } from '../i18n.js';
 
 export function parseWorkflow(filePath: string): WorkflowDefinition {
   const raw = readFileSync(filePath, 'utf-8');
@@ -11,26 +12,26 @@ export function parseWorkflow(filePath: string): WorkflowDefinition {
 
   // 基本校验
   if (!doc || typeof doc !== 'object') {
-    throw new Error(`工作流文件格式错误: ${filePath}`);
+    throw new Error(t('parse.bad_yaml', { path: filePath }));
   }
   if (!doc.name || typeof doc.name !== 'string') {
-    throw new Error('工作流缺少 name 字段');
+    throw new Error(t('parse.missing_name'));
   }
   if (!doc.steps || !Array.isArray(doc.steps) || doc.steps.length === 0) {
-    throw new Error('工作流缺少 steps 或 steps 为空');
+    throw new Error(t('parse.missing_steps'));
   }
   if (!doc.llm || typeof doc.llm !== 'object') {
-    throw new Error('工作流缺少 llm 配置');
+    throw new Error(t('parse.missing_llm'));
   }
 
   const llm = doc.llm as Record<string, unknown>;
   if (!llm.provider) {
-    throw new Error('llm 配置缺少 provider');
+    throw new Error(t('parse.missing_provider'));
   }
   // CLI providers (claude-code, gemini-cli, copilot-cli, codex-cli, openclaw-cli, hermes-cli) 和 ollama 不需要 model
   const cliProviders = ['claude-code', 'gemini-cli', 'copilot-cli', 'codex-cli', 'openclaw-cli', 'hermes-cli', 'ollama'];
   if (!llm.model && !cliProviders.includes(llm.provider as string)) {
-    throw new Error('llm 配置缺少 model（CLI provider 可省略）');
+    throw new Error(t('parse.missing_model'));
   }
 
   // 校验每个 step
@@ -38,7 +39,7 @@ export function parseWorkflow(filePath: string): WorkflowDefinition {
   const steps = doc.steps as StepDefinition[];
 
   for (const step of steps) {
-    if (!step.id) throw new Error('step 缺少 id');
+    if (!step.id) throw new Error(t('parse.missing_step_id'));
     if (stepIds.has(step.id)) throw new Error(`step id 重复: ${step.id}`);
     stepIds.add(step.id);
 
@@ -111,10 +112,7 @@ export function validateWorkflow(workflow: WorkflowDefinition): string[] {
       if (!inputDef && !isOutput && varName !== '_loop_iteration') {
         errors.push(`step "${step.id}" 引用了未定义的变量: {{${varName}}}`);
       }
-      // 可选输入无默认值用在模板中 → 警告
-      if (inputDef && !inputDef.required && inputDef.default === undefined) {
-        errors.push(`step "${step.id}" 使用了可选输入 {{${varName}}}，但未设置默认值（未提供时为空字符串）`);
-      }
+      // 可选输入无默认值时，运行时自动填空字符串 — 非错误，不再警告
     }
   }
 

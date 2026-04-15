@@ -2,6 +2,7 @@
  * DAG 构建和拓扑排序
  */
 import type { WorkflowDefinition, DAGNode } from '../types.js';
+import { t } from '../i18n.js';
 
 export interface DAG {
   nodes: Map<string, DAGNode>;
@@ -106,7 +107,7 @@ function topologicalLevels(nodes: Map<string, DAGNode>): string[][] {
  * 格式化 DAG 为可读文本（用于 `ao plan` 命令）
  */
 export function formatDAG(dag: DAG): string {
-  const lines: string[] = ['执行计划:\n'];
+  const lines: string[] = [`${t('dag.title')}\n`];
 
   for (let i = 0; i < dag.levels.length; i++) {
     const level = dag.levels[i];
@@ -116,18 +117,18 @@ export function formatDAG(dag: DAG): string {
       const node = dag.nodes.get(level[j])!;
       const step = node.step;
       const prefix = parallel ? (j === 0 ? '┌' : j === level.length - 1 ? '└' : '├') : '→';
-      const tag = parallel ? ' (并行)' : '';
+      const tag = parallel ? t('dag.parallel') : '';
 
-      lines.push(`  第${i + 1}层 ${prefix} [${step.id}] ${step.role || step.type}${tag}`);
+      lines.push(`  ${t('dag.layer', { n: i + 1 })} ${prefix} [${step.id}] ${step.role || step.type}${tag}`);
 
       if (node.dependencies.length > 0) {
-        lines.push(`         依赖: ${node.dependencies.join(', ')}`);
+        lines.push(`         ${t('dag.deps')}: ${node.dependencies.join(', ')}`);
       }
       if (step.condition) {
-        lines.push(`         条件: ${step.condition}`);
+        lines.push(`         ${t('dag.condition')}: ${step.condition}`);
       }
       if (step.loop) {
-        lines.push(`         循环: → ${step.loop.back_to} (最多 ${step.loop.max_iterations} 次)`);
+        lines.push(`         ${t('dag.loop', { to: step.loop.back_to, n: step.loop.max_iterations })}`);
       }
     }
     if (i < dag.levels.length - 1) lines.push('  │');

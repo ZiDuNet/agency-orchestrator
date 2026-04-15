@@ -9,6 +9,7 @@
  */
 import { spawn } from 'node:child_process';
 import type { LLMConnector, LLMResult, LLMConfig } from '../types.js';
+import { t } from '../i18n.js';
 
 /**
  * 命令行参数安全长度上限
@@ -80,7 +81,7 @@ export class CLIBaseConnector implements LLMConnector {
         if (now - lastProgressTime > 10_000) {
           lastProgressTime = now;
           const kb = (receivedBytes / 1024).toFixed(1);
-          process.stderr.write(`  📡 已接收 ${kb}KB...\n`);
+          process.stderr.write(`  ${t('stream.received', { size: kb })}\n`);
         }
       });
       child.stderr!.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });

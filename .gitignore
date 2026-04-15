@@ -9,3 +9,6 @@ ao-output/
 .claude/
 marketing/
 *.cast
+web/
+demo.gif
+serve.json

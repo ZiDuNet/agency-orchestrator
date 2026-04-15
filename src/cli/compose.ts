@@ -9,6 +9,7 @@ import { existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, relative } from 'node:path';
 import { createConnector } from '../connectors/factory.js';
 import type { LLMConfig } from '../types.js';
+import { t } from '../i18n.js';
 
 /** 精简的角色摘要，供 LLM 选角色用 */
 export interface RoleSummary {
@@ -339,7 +340,7 @@ export async function composeWorkflow(options: {
   // 1. 构建角色目录
   const roles = buildRoleCatalog(agentsDir);
   if (roles.length === 0) {
-    throw new Error(`角色目录为空: ${agentsDir}\n请先运行 ao init 下载角色定义`);
+    throw new Error(t('compose.empty_catalog', { dir: agentsDir }));
   }
   const catalog = formatCatalogForPrompt(roles);
 
@@ -353,7 +354,7 @@ export async function composeWorkflow(options: {
   const userPrompt = buildComposeUserPrompt(description, lang);
 
   // 3. 调用 LLM
-  console.log(`  正在用 AI 编排工作流...（${roles.length} 个角色可选）\n`);
+  console.log(`  ${t('compose.generating', { n: roles.length })}\n`);
 
   const connector = createConnector(llmConfig);
   const result = await connector.chat(systemPrompt, userPrompt, {
@@ -364,7 +365,7 @@ export async function composeWorkflow(options: {
   // 4. 提取 YAML
   const yaml = extractYamlFromResponse(result.content);
   if (!yaml || !yaml.includes('steps:')) {
-    throw new Error('AI 生成的内容不是有效的 workflow YAML，请重试或调整描述');
+    throw new Error(t('compose.invalid_yaml'));
   }
 
   // 5. 保存（避免覆盖）
@@ -380,7 +381,9 @@ export async function composeWorkflow(options: {
 
   const relativePath = relative(process.cwd(), savedPath);
 
-  console.log(`  Token 用量: 输入 ${result.usage.input_tokens}, 输出 ${result.usage.output_tokens}`);
+  if (process.env.AO_VERBOSE) {
+    console.log(`  ${t('compose.tokens', { in: result.usage.input_tokens, out: result.usage.output_tokens })}`);
+  }
 
   // 6. 校验生成的 YAML（含角色路径真实性校验，防 LLM 幻觉）
   const warnings: string[] = [];
