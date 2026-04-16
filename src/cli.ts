@@ -9,7 +9,7 @@
  *   ao roles --agents-dir ./agents
  */
 import { readFileSync, existsSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
 import { execSync } from 'node:child_process';
 import { parseWorkflow, validateWorkflow } from './core/parser.js';
 import type { LLMConfig } from './types.js';
@@ -562,16 +562,33 @@ function parseInputArgs(): Record<string, string> {
  * 2. ./agency-agents (英文角色，ao init --lang en 下载的)
  * 3. ../agency-agents-zh 或 ../agency-agents (同级目录)
  * 4. ./agents (自定义)
+ * 5. node_modules/agency-agents-zh (npm 依赖，全局安装时)
+ * 6. 包内置 agency-agents/ (随 npm 包分发，与 dist/ 同级)
  *
  * @param preferLang 优先语言，影响搜索顺序
  */
 function resolveAgentsDir(preferLang?: 'zh' | 'en'): string {
+  // scriptDir = dist/ inside the installed package
+  const scriptDir = dirname(new URL(import.meta.url).pathname);
+
   const zhFirst = [
     './agency-agents-zh',
     './agency-agents',
     '../agency-agents-zh',
     '../agency-agents',
     './agents',
+    // npm 依赖 (cwd/node_modules)
+    './node_modules/agency-agents-zh',
+    './node_modules/agency-agents',
+    // npm 依赖 (包自身的 node_modules，全局安装时)
+    join(scriptDir, '..', 'node_modules', 'agency-agents-zh'),
+    join(scriptDir, '..', 'node_modules', 'agency-agents'),
+    // hoisted node_modules (npm 有时会提升依赖)
+    join(scriptDir, '..', '..', 'node_modules', 'agency-agents-zh'),
+    join(scriptDir, '..', '..', 'node_modules', 'agency-agents'),
+    // 包内置 agency-agents/ (与 dist/ 同级)
+    join(scriptDir, '..', 'agency-agents-zh'),
+    join(scriptDir, '..', 'agency-agents'),
   ];
   const enFirst = [
     './agency-agents',
@@ -579,11 +596,23 @@ function resolveAgentsDir(preferLang?: 'zh' | 'en'): string {
     '../agency-agents',
     '../agency-agents-zh',
     './agents',
+    // npm 依赖 (cwd/node_modules)
+    './node_modules/agency-agents',
+    './node_modules/agency-agents-zh',
+    // npm 依赖 (包自身的 node_modules，全局安装时)
+    join(scriptDir, '..', 'node_modules', 'agency-agents'),
+    join(scriptDir, '..', 'node_modules', 'agency-agents-zh'),
+    // hoisted node_modules
+    join(scriptDir, '..', '..', 'node_modules', 'agency-agents'),
+    join(scriptDir, '..', '..', 'node_modules', 'agency-agents-zh'),
+    // 包内置
+    join(scriptDir, '..', 'agency-agents'),
+    join(scriptDir, '..', 'agency-agents-zh'),
   ];
   const candidates = preferLang === 'en' ? enFirst : zhFirst;
   for (const dir of candidates) {
     const full = resolve(dir);
-    if (existsSync(full)) return dir;
+    if (existsSync(full)) return full;
   }
   return preferLang === 'en' ? './agency-agents' : './agency-agents-zh';
 }
