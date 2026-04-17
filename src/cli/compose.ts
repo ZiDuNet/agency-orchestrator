@@ -82,6 +82,9 @@ function buildComposeSystemPromptEn(catalog: string, options?: { autoRun?: boole
   const autoRun = options?.autoRun ?? false;
   const provider = options?.provider || 'deepseek';
   const model = options?.model;
+  const isLocal = provider === 'ollama';
+  const maxTokens = isLocal ? 8192 : 4096;
+  const timeoutMs = isLocal ? 600000 : 120000;
 
   const inputsSection = autoRun
     ? `
@@ -129,8 +132,8 @@ agents_dir: "agency-agents"
 llm:
   provider: ${provider}
   ${model ? `model: ${model}` : ''}
-  max_tokens: 4096
-  timeout: 120000
+  max_tokens: ${maxTokens}
+  timeout: ${timeoutMs}
   retry: 2
 
 concurrency: 2
@@ -176,6 +179,9 @@ function buildComposeSystemPromptZh(catalog: string, options?: { autoRun?: boole
   const autoRun = options?.autoRun ?? false;
   const provider = options?.provider || 'deepseek';
   const model = options?.model;
+  const isLocal = provider === 'ollama';
+  const maxTokens = isLocal ? 8192 : 4096;
+  const timeoutMs = isLocal ? 600000 : 120000;
 
   const inputsSection = autoRun
     ? `
@@ -223,8 +229,8 @@ agents_dir: "agency-agents-zh"
 llm:
   provider: ${provider}
   ${model ? `model: ${model}` : ''}
-  max_tokens: 4096
-  timeout: 120000
+  max_tokens: ${maxTokens}
+  timeout: ${timeoutMs}
   retry: 2
 
 concurrency: 2

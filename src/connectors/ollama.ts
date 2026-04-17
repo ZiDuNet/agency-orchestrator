@@ -25,7 +25,7 @@ export class OllamaConnector implements LLMConnector {
           ],
           stream: false,
           options: {
-            num_predict: config.max_tokens || 2048,
+            num_predict: config.max_tokens || 8192,
           },
         }),
       });
