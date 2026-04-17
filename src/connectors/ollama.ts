@@ -12,24 +12,36 @@ export class OllamaConnector implements LLMConnector {
   }
 
   async chat(systemPrompt: string, userMessage: string, config: LLMConfig): Promise<LLMResult> {
-    const response = await fetch(`${this.baseUrl}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: config.model || 'llama3.1',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
-        ],
-        stream: false,
-        options: {
-          num_predict: config.max_tokens || 2048,
-        },
-      }),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: config.model || 'llama3.1',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage },
+          ],
+          stream: false,
+          options: {
+            num_predict: config.max_tokens || 2048,
+          },
+        }),
+      });
+    } catch (err: any) {
+      if (err?.cause?.code === 'ECONNREFUSED' || err?.message?.includes('ECONNREFUSED')) {
+        throw new Error(`无法连接 Ollama (${this.baseUrl})，请确认 ollama 已启动。Docker 环境请设置 OLLAMA_BASE_URL=http://host.docker.internal:11434`);
+      }
+      throw err;
+    }
 
     if (!response.ok) {
       const text = await response.text();
+      if (response.status === 404 && text.includes('not found')) {
+        const model = config.model || 'llama3.1';
+        throw new Error(`Ollama 模型 "${model}" 未找到，请先运行: ollama pull ${model}`);
+      }
       throw new Error(`Ollama error ${response.status}: ${text}`);
     }
 

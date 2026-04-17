@@ -269,14 +269,14 @@ export async function startServer(verbose = false): Promise<void> {
     async ({ description, provider, model }) => {
       try {
         const agentsDir = findAgentsDir();
-        const llmProvider = provider || 'deepseek';
+        const llmProvider = provider || process.env.AO_PROVIDER as any || 'deepseek';
         const defaultModels: Record<string, string> = {
           deepseek: 'deepseek-chat',
           claude: 'claude-sonnet-4-20250514',
           openai: 'gpt-4o',
           ollama: 'llama3',
         };
-        const llmModel = model || defaultModels[llmProvider] || 'gpt-4o';
+        const llmModel = model || process.env.AO_MODEL || defaultModels[llmProvider] || 'gpt-4o';
 
         const result = await silentCall(() =>
           composeWorkflow({

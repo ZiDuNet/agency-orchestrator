@@ -167,7 +167,8 @@ export async function detectAvailableLLMs(): Promise<DetectedLLM[]> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch('http://localhost:11434/api/tags', {
+    const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+    const res = await fetch(`${ollamaUrl.replace(/\/+$/, '')}/api/tags`, {
       signal: controller.signal,
     });
     clearTimeout(timeout);
