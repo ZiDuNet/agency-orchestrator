@@ -5,7 +5,7 @@
  * 支持中文（agency-agents-zh）和英文（agency-agents）角色库。
  */
 import { listAgents } from '../agents/loader.js';
-import { existsSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, relative } from 'node:path';
 import { createConnector } from '../connectors/factory.js';
 import type { LLMConfig } from '../types.js';
@@ -435,6 +435,19 @@ export async function composeWorkflow(options: {
       if (retryYaml && retryYaml.includes('steps:')) {
         writeFileSync(savedPath, retryYaml + '\n', 'utf-8');
         const second = await validateGenerated(savedPath);
+        // 重试后仍有变量引用错误 → 自动修复
+        const retryVarErrors = second.errors.filter(e => e.includes('未定义的变量'));
+        if (retryVarErrors.length > 0) {
+          const fixResult = await autoFixVariableRefs(savedPath);
+          if (fixResult.fixed > 0) {
+            console.log(`  自动修复了 ${fixResult.fixed} 个变量引用：`);
+            for (const f of fixResult.details) console.log(`    {{${f.from}}} → {{${f.to}}}`);
+            const afterFix = await validateGenerated(savedPath);
+            warnings.push(...afterFix.errors);
+            const fixedYaml = readFileSync(savedPath, 'utf-8').trim();
+            return { yaml: fixedYaml, savedPath, relativePath, warnings };
+          }
+        }
         warnings.push(...second.errors);
         return { yaml: retryYaml, savedPath, relativePath, warnings };
       }
@@ -443,6 +456,146 @@ export async function composeWorkflow(options: {
     }
   }
 
+  // 自动修复未定义的变量引用（LLM 常见错误：变量名与 output 名不一致）
+  const varErrors = first.errors.filter(e => e.includes('未定义的变量'));
+  if (varErrors.length > 0) {
+    const fixResult = await autoFixVariableRefs(savedPath);
+    if (fixResult.fixed > 0) {
+      console.log(`  自动修复了 ${fixResult.fixed} 个变量引用：`);
+      for (const f of fixResult.details) {
+        console.log(`    {{${f.from}}} → {{${f.to}}}`);
+      }
+      // 重新校验
+      const afterFix = await validateGenerated(savedPath);
+      warnings.push(...afterFix.errors);
+      const fixedYaml = readFileSync(savedPath, 'utf-8').trim();
+      return { yaml: fixedYaml, savedPath, relativePath, warnings };
+    }
+  }
+
   warnings.push(...first.errors);
   return { yaml, savedPath, relativePath, warnings };
+}
+
+/**
+ * 自动修复 compose 生成 YAML 中的变量引用错误。
+ * 常见情况：LLM 用 step id 或 role 名代替 output 变量名。
+ */
+async function autoFixVariableRefs(yamlPath: string): Promise<{ fixed: number; details: { from: string; to: string }[] }> {
+  const { parseWorkflow } = await import('../core/parser.js');
+  const content = readFileSync(yamlPath, 'utf-8');
+  let workflow;
+  try {
+    workflow = parseWorkflow(yamlPath);
+  } catch {
+    return { fixed: 0, details: [] };
+  }
+
+  const inputNames = new Set((workflow.inputs || []).map((i: any) => i.name));
+  const outputNames = new Set<string>();
+  const stepIdToOutput = new Map<string, string>();
+
+  for (const step of workflow.steps) {
+    if (step.output) {
+      outputNames.add(step.output);
+      stepIdToOutput.set(step.id, step.output);
+    }
+  }
+
+  const allDefined = new Set([...inputNames, ...outputNames, '_loop_iteration']);
+  const replacements: { from: string; to: string }[] = [];
+  let fixedContent = content;
+
+  // 找出所有未定义的变量引用
+  const undefinedVars = new Set<string>();
+  for (const step of workflow.steps) {
+    const refs = step.task?.match(/\{\{(\w+)\}\}/g) || [];
+    for (const ref of refs) {
+      const varName = ref.slice(2, -2);
+      if (!allDefined.has(varName)) {
+        undefinedVars.add(varName);
+      }
+    }
+  }
+
+  for (const badVar of undefinedVars) {
+    // 策略1：badVar 是某个 step id，该 step 有 output → 替换为 output
+    if (stepIdToOutput.has(badVar)) {
+      const goodVar = stepIdToOutput.get(badVar)!;
+      fixedContent = fixedContent.replace(new RegExp(`\\{\\{${badVar}\\}\\}`, 'g'), `{{${goodVar}}}`);
+      replacements.push({ from: badVar, to: goodVar });
+      continue;
+    }
+
+    // 策略2：模糊匹配 — 找子串包含关系最强的 output 变量
+    const best = findBestMatch(badVar, [...outputNames]);
+    if (best) {
+      fixedContent = fixedContent.replace(new RegExp(`\\{\\{${badVar}\\}\\}`, 'g'), `{{${best}}}`);
+      replacements.push({ from: badVar, to: best });
+      continue;
+    }
+
+    // 策略3：按 depends_on 找上游有 output 且尚未被引用的步骤
+    const alreadyUsed = new Set(replacements.map(r => r.to));
+    for (const step of workflow.steps) {
+      const refs = step.task?.match(/\{\{(\w+)\}\}/g) || [];
+      const hasBadRef = refs.some((r: string) => r.slice(2, -2) === badVar);
+      if (hasBadRef && step.depends_on?.length) {
+        // 优先选还没被占用的上游 output
+        const deps = step.depends_on.filter(d => stepIdToOutput.has(d));
+        const unusedDep = deps.find(d => !alreadyUsed.has(stepIdToOutput.get(d)!));
+        const depId = unusedDep || deps[0];
+        if (depId) {
+          const goodVar = stepIdToOutput.get(depId)!;
+          fixedContent = fixedContent.replace(new RegExp(`\\{\\{${badVar}\\}\\}`, 'g'), `{{${goodVar}}}`);
+          replacements.push({ from: badVar, to: goodVar });
+        }
+        break;
+      }
+    }
+  }
+
+  if (replacements.length > 0) {
+    writeFileSync(yamlPath, fixedContent, 'utf-8');
+  }
+  return { fixed: replacements.length, details: replacements };
+}
+
+/**
+ * 模糊匹配：找子串包含、前缀/后缀重叠最多的候选
+ */
+function findBestMatch(target: string, candidates: string[]): string | null {
+  if (candidates.length === 0) return null;
+  const t = target.toLowerCase();
+
+  // 完全包含关系
+  for (const c of candidates) {
+    const cl = c.toLowerCase();
+    if (t.includes(cl) || cl.includes(t)) return c;
+  }
+
+  // 按公共子串长度打分
+  let best = '';
+  let bestScore = 0;
+  for (const c of candidates) {
+    const cl = c.toLowerCase();
+    const score = longestCommonSubstring(t, cl);
+    if (score > bestScore && score >= 3) {
+      bestScore = score;
+      best = c;
+    }
+  }
+  return best || null;
+}
+
+function longestCommonSubstring(a: string, b: string): number {
+  let max = 0;
+  for (let i = 0; i < a.length; i++) {
+    for (let j = 0; j < b.length; j++) {
+      let k = 0;
+      while (i + k < a.length && j + k < b.length && a[i + k] === b[j + k]) k++;
+      if (k > max) max = k;
+    }
+  }
+  return max;
 }
