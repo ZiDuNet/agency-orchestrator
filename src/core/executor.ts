@@ -310,29 +310,34 @@ async function executeStep(
   ));
   const effectiveConnector = needsNewConnector ? createConnector(effectiveConfig) : opts.connector;
 
+  // timeout / retry / CLI 判定必须基于 effectiveConfig，否则 step 级覆盖这几个字段时会被全局值吃掉
+  const effectiveIsCLI = effectiveConfig.provider.endsWith('-cli') || effectiveConfig.provider === 'claude-code';
+  const effectiveIsLocal = effectiveConfig.provider === 'ollama';
+  const effectiveTimeout = effectiveConfig.timeout || (effectiveIsCLI ? 600_000 : effectiveIsLocal ? 600_000 : 120_000);
+  const effectiveMaxRetry = effectiveConfig.retry ?? opts.maxRetry;
+
   // 带重试的 LLM 调用
   let lastError: Error | null = null;
-  for (let attempt = 0; attempt <= opts.maxRetry; attempt++) {
+  for (let attempt = 0; attempt <= effectiveMaxRetry; attempt++) {
     try {
       const result = await withTimeout(
         effectiveConnector.chat(systemPrompt, userMessage, effectiveConfig),
-        opts.timeout
+        effectiveTimeout
       );
       node.tokenUsage = { input: result.usage.input_tokens, output: result.usage.output_tokens };
       return result.content;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      if (attempt < opts.maxRetry && isRetryable(lastError)) {
-        const isCLI = opts.llmConfig.provider.endsWith('-cli') || opts.llmConfig.provider === 'claude-code';
+      if (attempt < effectiveMaxRetry && isRetryable(lastError)) {
         const errorClass = classifyError(lastError);
         // 分级退避：rate_limit 最长，connection 中等，server_error 最短
-        const baseByClass = isCLI
+        const baseByClass = effectiveIsCLI
           ? { rate_limit: 15_000, connection: 10_000, server_error: 5_000 }
           : { rate_limit: 5_000,  connection: 2_000,  server_error: 1_000 };
         const base = baseByClass[errorClass as keyof typeof baseByClass] || 1_000;
         const jitter = Math.random() * 0.3;  // 0-30% 抖动，防止并发步骤同时重试
         const delay = Math.round(base * Math.pow(2, attempt) * (1 + jitter));
-        process.stderr.write(`\n  ⚠️  ${node.step.id} 失败 (${lastError.message.slice(0, 80)})，${Math.round(delay / 1000)}s 后重试 (${attempt + 1}/${opts.maxRetry})...\n`);
+        process.stderr.write(`\n  ⚠️  ${node.step.id} 失败 (${lastError.message.slice(0, 80)})，${Math.round(delay / 1000)}s 后重试 (${attempt + 1}/${effectiveMaxRetry})...\n`);
         await sleep(delay);
         continue;
       }
