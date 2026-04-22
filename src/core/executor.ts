@@ -301,9 +301,14 @@ async function executeStep(
   const effectiveConfig: LLMConfig = stepLlm
     ? { ...opts.llmConfig, ...stepLlm } as LLMConfig
     : opts.llmConfig;
-  const effectiveConnector = (stepLlm?.provider && stepLlm.provider !== opts.llmConfig.provider)
-    ? createConnector(effectiveConfig)
-    : opts.connector;
+  // connector 把 api_key / base_url 存在构造时的私有字段，chat(config) 不会再读
+  // 所以 step 级覆盖任一凭证字段时必须重建 connector
+  const needsNewConnector = !!(stepLlm && (
+    (stepLlm.provider && stepLlm.provider !== opts.llmConfig.provider) ||
+    stepLlm.base_url !== undefined ||
+    stepLlm.api_key !== undefined
+  ));
+  const effectiveConnector = needsNewConnector ? createConnector(effectiveConfig) : opts.connector;
 
   // 带重试的 LLM 调用
   let lastError: Error | null = null;
