@@ -106,6 +106,8 @@ async function handleRun(): Promise<void> {
   // Precedence: CLI flag > .env (AO_PROVIDER/AO_MODEL) > YAML
   const provider = (getArgValue('--provider') || process.env.AO_PROVIDER) as LLMConfig['provider'] | undefined;
   const model = getArgValue('--model') || process.env.AO_MODEL;
+  const baseUrl = getArgValue('--base-url') || getArgValue('--baseurl');
+  const apiKey = getArgValue('--api-key') || getArgValue('--apikey');
 
   // --resume last: 自动找最近一次的输出目录
   if (resumeDir === 'last') {
@@ -119,14 +121,22 @@ async function handleRun(): Promise<void> {
   }
 
   try {
-    // --provider / --model: 命令行覆盖 YAML 中的 LLM 配置
+    // --provider / --model / --base-url / --api-key: 命令行覆盖 YAML 中的 LLM 配置
     const cliProviders = ['claude-code', 'gemini-cli', 'copilot-cli', 'codex-cli', 'openclaw-cli', 'hermes-cli'];
-    const llmOverride = provider ? {
-      provider,
-      // CLI provider 不指定 model 时清空（避免 YAML 里的 deepseek-chat 传给 claude CLI）
-      model: model || (cliProviders.includes(provider) ? '' : undefined),
-      ...(cliProviders.includes(provider) ? { timeout: 600_000 } : {}),
-    } as Partial<LLMConfig> : undefined;
+    let llmOverride: Partial<LLMConfig> | undefined;
+    if (provider || model || baseUrl || apiKey) {
+      llmOverride = {};
+      if (provider) {
+        llmOverride.provider = provider;
+        // CLI provider 不指定 model 时清空（避免 YAML 里的 deepseek-chat 传给 claude CLI）
+        llmOverride.model = model || (cliProviders.includes(provider) ? '' : undefined);
+        if (cliProviders.includes(provider)) llmOverride.timeout = 600_000;
+      } else if (model) {
+        llmOverride.model = model;
+      }
+      if (baseUrl) llmOverride.base_url = baseUrl;
+      if (apiKey) llmOverride.api_key = apiKey;
+    }
 
     const result = await run(resolve(filePath), inputs, {
       outputDir,
@@ -220,7 +230,7 @@ async function handleExplain(): Promise<void> {
 async function handleCompose(): Promise<void> {
   const autoRun = args.includes('--run');
   // 描述是第一个非 flag 的参数（跳过 compose 本身和 --xxx 的值）
-  const flagsWithValue = new Set(['--name', '--provider', '--model', '--agents-dir', '--lang']);
+  const flagsWithValue = new Set(['--name', '--provider', '--model', '--agents-dir', '--lang', '--base-url', '--baseurl', '--api-key', '--apikey']);
   let description: string | undefined;
   for (let i = 1; i < args.length; i++) {
     if (args[i] === '--run') continue;
@@ -256,6 +266,8 @@ async function handleCompose(): Promise<void> {
     provider === 'claude' ? 'claude-sonnet-4-20250514' :
     'gpt-4o'
   );
+  const baseUrl = getArgValue('--base-url') || getArgValue('--baseurl');
+  const apiKey = getArgValue('--api-key') || getArgValue('--apikey');
   // 自动检测语言：英文输入 → 优先英文角色库
   const { detectLang } = await import('./cli/compose.js');
   const composeLang = getArgValue('--lang') as 'zh' | 'en' | undefined ?? detectLang(description);
@@ -267,7 +279,12 @@ async function handleCompose(): Promise<void> {
     const { yaml, savedPath, relativePath, warnings } = await composeWorkflow({
       description,
       agentsDir: resolve(agentsDir),
-      llmConfig: { provider, model },
+      llmConfig: {
+        provider,
+        model,
+        ...(baseUrl ? { base_url: baseUrl } : {}),
+        ...(apiKey ? { api_key: apiKey } : {}),
+      },
       outputName,
       autoRun,
       lang: composeLang,
@@ -309,7 +326,13 @@ async function handleCompose(): Promise<void> {
         quiet: false,
         // 用 compose 时同样的 provider 执行，避免 YAML 里写的 provider 和用户实际可用的不一致
         // CLI provider 单步调用可能很慢（1-20 分钟），给足超时
-        llmOverride: { provider, model: model || undefined, timeout: cliProviders.includes(provider) ? 600_000 : 300_000 },
+        llmOverride: {
+          provider,
+          model: model || undefined,
+          timeout: cliProviders.includes(provider) ? 600_000 : 300_000,
+          ...(baseUrl ? { base_url: baseUrl } : {}),
+          ...(apiKey ? { api_key: apiKey } : {}),
+        },
       });
       process.exit(result.success ? 0 : 1);
     }
