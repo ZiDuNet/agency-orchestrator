@@ -1,11 +1,14 @@
 # agency-orchestrator 自动编译发布
-# Push 到 main 或打 tag 时自动编译，生成 GitHub Release
 name: Build & Release
 
 on:
   push:
     branches: [main]
     tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -15,7 +18,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: 安装依赖
         run: npm install --ignore-scripts
@@ -26,7 +29,6 @@ jobs:
       - name: 准备发布包
         run: |
           mkdir -p _release
-          # 复制编译产物和运行时必需文件
           cp -r dist _release/
           cp -r workflows _release/ 2>/dev/null || true
           cp -r agency-agents _release/ 2>/dev/null || true
@@ -34,7 +36,6 @@ jobs:
           cp -r integrations _release/ 2>/dev/null || true
           cp LICENSE _release/ 2>/dev/null || true
           cp README.md _release/ 2>/dev/null || true
-          # 生成精简 package.json（去掉 devDependencies 和 scripts）
           node -e "
             const p=require('./package.json');
             delete p.devDependencies;
@@ -48,7 +49,6 @@ jobs:
           tar -czf ../agency-orchestrator-dist.tar.gz .
           cd ..
 
-      # 每次 push 到 main 都创建一个 "latest" 预发布
       - name: 生成版本号
         id: version
         run: |
@@ -66,7 +66,6 @@ jobs:
           name: agency-orchestrator-dist
           path: _release/
 
-      # tag 时创建正式 Release，main push 时更新 latest 预发布
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -76,5 +75,3 @@ jobs:
           body: |
             自动编译发布 - ${{ steps.version.outputs.ver }}
             commit: ${{ github.sha }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
