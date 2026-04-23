@@ -316,12 +316,14 @@ async function executeStep(
   // timeout 策略：
   // - 用户显式设置（含 timeout: 0 表示不限时）→ 第一次按此值
   // - 未设置 → provider 默认（API 120s / CLI/ollama 600s）
-  // - 因超时触发 retry 时，下一轮 timeout x1.5（上限 900s）
+  // - 因超时触发 retry 时，下一轮 timeout x1.5（上限 3600s / 60min）
   //   非超时类错误（429/500/ECONNRESET 等）保持原 timeout，避免无谓放大
+  // - 上限是防误配置放飞的保险丝（retry 10 次可能放大到几十小时），
+  //   真要超过 1 小时单步请用 timeout: 0 / --timeout 0 完全不限时
   const defaultTimeout = effectiveIsCLI ? 600_000 : effectiveIsLocal ? 600_000 : 120_000;
   const baseTimeout = effectiveConfig.timeout !== undefined ? effectiveConfig.timeout : defaultTimeout;
   const effectiveMaxRetry = effectiveConfig.retry ?? opts.maxRetry;
-  const TIMEOUT_CAP = 900_000;
+  const TIMEOUT_CAP = 3_600_000;
 
   // 带重试的 LLM 调用（timeout 在网络超时类错误重试时自动延长）
   let lastError: Error | null = null;
