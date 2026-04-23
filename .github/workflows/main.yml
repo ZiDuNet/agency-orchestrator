@@ -1,0 +1,80 @@
+# agency-orchestrator 自动编译发布
+# Push 到 main 或打 tag 时自动编译，生成 GitHub Release
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 安装依赖
+        run: npm install --ignore-scripts
+
+      - name: 编译 TypeScript
+        run: npm run build
+
+      - name: 准备发布包
+        run: |
+          mkdir -p _release
+          # 复制编译产物和运行时必需文件
+          cp -r dist _release/
+          cp -r workflows _release/ 2>/dev/null || true
+          cp -r agency-agents _release/ 2>/dev/null || true
+          cp -r examples _release/ 2>/dev/null || true
+          cp -r integrations _release/ 2>/dev/null || true
+          cp LICENSE _release/ 2>/dev/null || true
+          cp README.md _release/ 2>/dev/null || true
+          # 生成精简 package.json（去掉 devDependencies 和 scripts）
+          node -e "
+            const p=require('./package.json');
+            delete p.devDependencies;
+            delete p.scripts;
+            require('fs').writeFileSync('_release/package.json', JSON.stringify(p, null, 2));
+          "
+
+      - name: 打包
+        run: |
+          cd _release
+          tar -czf ../agency-orchestrator-dist.tar.gz .
+          cd ..
+
+      # 每次 push 到 main 都创建一个 "latest" 预发布
+      - name: 生成版本号
+        id: version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            echo "ver=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          else
+            echo "ver=latest-$(date +%Y%m%d-%H%M)" >> $GITHUB_OUTPUT
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: agency-orchestrator-dist
+          path: _release/
+
+      # tag 时创建正式 Release，main push 时更新 latest 预发布
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.ver }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          files: agency-orchestrator-dist.tar.gz
+          body: |
+            自动编译发布 - ${{ steps.version.outputs.ver }}
+            commit: ${{ github.sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
