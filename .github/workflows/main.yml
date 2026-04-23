@@ -49,16 +49,18 @@ jobs:
           tar -czf ../agency-orchestrator-dist.tar.gz .
           cd ..
 
-      - name: 生成版本号
+      - name: 读取版本号
         id: version
         run: |
+          PKG_VER=$(node -p "require('./package.json').version")
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            echo "ver=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
             echo "prerelease=false" >> $GITHUB_OUTPUT
           else
-            echo "ver=latest-$(date +%Y%m%d-%H%M)" >> $GITHUB_OUTPUT
+            echo "tag=v${PKG_VER}-build$(date +%Y%m%d%H%M)" >> $GITHUB_OUTPUT
             echo "prerelease=true" >> $GITHUB_OUTPUT
           fi
+          echo "pkg_version=${PKG_VER}" >> $GITHUB_OUTPUT
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
@@ -69,9 +71,9 @@ jobs:
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.ver }}
+          tag_name: ${{ steps.version.outputs.tag }}
           prerelease: ${{ steps.version.outputs.prerelease }}
           files: agency-orchestrator-dist.tar.gz
           body: |
-            自动编译发布 - ${{ steps.version.outputs.ver }}
+            版本: ${{ steps.version.outputs.pkg_version }}
             commit: ${{ github.sha }}
